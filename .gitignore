@@ -1,0 +1,22 @@
+# Xcode generated (xcodegen will recreate it)
+Forbes_Selfie.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+
+# Build artifacts
+build/
+DerivedData/
+*.ipa
+Payload/
+
+# macOS
+.DS_Store
+*.swp
+
+# CocoaPods (not used but just in case)
+Pods/
+Podfile.lock
+
+# Swift Package Manager
+.build/
+.swiftpm/

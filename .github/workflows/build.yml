@@ -1,0 +1,68 @@
+name: Build Forbes Selfie IPA
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:   # allow manual trigger from GitHub UI
+
+jobs:
+  build:
+    name: Build unsigned IPA
+    runs-on: macos-14   # Xcode 15 preinstalled
+
+    steps:
+      # ── 1. Checkout code ────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Select Xcode version ─────────────────────────────────────────────
+      - name: Select Xcode 15
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+
+      # ── 3. Install XcodeGen ─────────────────────────────────────────────────
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # ── 4. Generate .xcodeproj from project.yml ─────────────────────────────
+      - name: Generate Xcode Project
+        run: xcodegen generate --spec project.yml
+
+      # ── 5. Build the app (unsigned, Release, iphoneos SDK) ──────────────────
+      - name: Build
+        run: |
+          xcodebuild \
+            -project Forbes_Selfie.xcodeproj \
+            -scheme Forbes_Selfie \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$PWD/build" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            ONLY_ACTIVE_ARCH=NO \
+            | xcpretty || true
+
+      # ── 6. Package .app → .ipa ───────────────────────────────────────────────
+      - name: Package IPA
+        run: |
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -1)
+          echo "Found app: $APP_PATH"
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          zip -r Forbes_Selfie_unsigned.ipa Payload/
+          echo "IPA created: $(du -sh Forbes_Selfie_unsigned.ipa)"
+
+      # ── 7. Upload IPA as artifact ────────────────────────────────────────────
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Forbes_Selfie_IPA
+          path: Forbes_Selfie_unsigned.ipa
+          retention-days: 30
+
+      # ── 8. Show build summary ────────────────────────────────────────────────
+      - name: Build Summary
+        run: |
+          echo "✅ Build complete!"
+          echo "📱 Download the IPA from the Artifacts section above"
+          echo "📲 Install with: Sideloadly or AltStore (re-signs with your Apple ID)"
