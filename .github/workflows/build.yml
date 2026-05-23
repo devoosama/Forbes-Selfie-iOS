@@ -3,66 +3,83 @@ name: Build Forbes Selfie IPA
 on:
   push:
     branches: [main, master]
-  workflow_dispatch:   # allow manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   build:
     name: Build unsigned IPA
-    runs-on: macos-14   # Xcode 15 preinstalled
+    runs-on: macos-14
 
     steps:
-      # ── 1. Checkout code ────────────────────────────────────────────────────
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── 2. Select Xcode version ─────────────────────────────────────────────
-      - name: Select Xcode 15
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+      # ── 2. Select latest available Xcode ────────────────────────────────────
+      - name: Select Xcode
+        run: |
+          echo "Available Xcode versions:"
+          ls /Applications/ | grep Xcode
+          XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Using: $XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
 
-      # ── 3. Install XcodeGen ─────────────────────────────────────────────────
+      # ── 3. Install XcodeGen ──────────────────────────────────────────────────
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      # ── 4. Generate .xcodeproj from project.yml ─────────────────────────────
+      # ── 4. Generate .xcodeproj ───────────────────────────────────────────────
       - name: Generate Xcode Project
-        run: xcodegen generate --spec project.yml
+        run: |
+          xcodegen generate --spec project.yml
+          echo "Generated project files:"
+          ls -la *.xcodeproj/ 2>/dev/null || true
 
-      # ── 5. Build the app (unsigned, Release, iphoneos SDK) ──────────────────
+      # ── 5. Build (with full output, no silent failures) ──────────────────────
       - name: Build
         run: |
+          set -o pipefail
           xcodebuild \
             -project Forbes_Selfie.xcodeproj \
             -scheme Forbes_Selfie \
             -configuration Release \
             -sdk iphoneos \
-            -derivedDataPath "$PWD/build" \
+            -derivedDataPath "$PWD/DerivedData" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
             ONLY_ACTIVE_ARCH=NO \
-            | xcpretty || true
+            build 2>&1
 
-      # ── 6. Package .app → .ipa ───────────────────────────────────────────────
+      # ── 6. Debug: show what was built ────────────────────────────────────────
+      - name: Find built app
+        run: |
+          echo "=== Searching for .app ==="
+          find DerivedData/ -name "*.app" -type d 2>/dev/null
+          echo ""
+          echo "=== DerivedData structure ==="
+          find DerivedData/Build/Products/ -maxdepth 3 2>/dev/null || echo "Products dir not found"
+
+      # ── 7. Package .app → .ipa ───────────────────────────────────────────────
       - name: Package IPA
         run: |
-          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -1)
-          echo "Found app: $APP_PATH"
+          APP_PATH=$(find DerivedData/ -name "*.app" -type d | grep -v ".xctest" | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ ERROR: No .app found in DerivedData/"
+            exit 1
+          fi
+          echo "✅ Found app: $APP_PATH"
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
           zip -r Forbes_Selfie_unsigned.ipa Payload/
-          echo "IPA created: $(du -sh Forbes_Selfie_unsigned.ipa)"
+          echo "📦 IPA size: $(du -sh Forbes_Selfie_unsigned.ipa)"
 
-      # ── 7. Upload IPA as artifact ────────────────────────────────────────────
-      - name: Upload IPA Artifact
+      # ── 8. Upload artifact ───────────────────────────────────────────────────
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: Forbes_Selfie_IPA
           path: Forbes_Selfie_unsigned.ipa
           retention-days: 30
-
-      # ── 8. Show build summary ────────────────────────────────────────────────
-      - name: Build Summary
-        run: |
-          echo "✅ Build complete!"
-          echo "📱 Download the IPA from the Artifacts section above"
-          echo "📲 Install with: Sideloadly or AltStore (re-signs with your Apple ID)"
