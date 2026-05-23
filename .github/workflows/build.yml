@@ -64,42 +64,24 @@ jobs:
           zip -r Forbes_Selfie.ipa Payload/
           echo "📦 $(du -sh Forbes_Selfie.ipa)"
 
-      # ── 7. Upload IPA to houarimed.tech/app/ ─────────────────────────────────
-      - name: Upload to Server
-        env:
-          SERVER_PASS: ${{ secrets.SERVER_PASS }}
+      # ── 7. Prepare FTP upload folder ─────────────────────────────────────────
+      - name: Prepare upload folder
         run: |
-          # Install sshpass
-          brew install sshpass
+          mkdir -p ftp_upload
+          cp Forbes_Selfie.ipa ftp_upload/
+          cp install_page/index.html ftp_upload/
+          ls -lh ftp_upload/
 
-          # Create /app/ folder on server if not exists
-          sshpass -p "$SERVER_PASS" ssh \
-            -o StrictHostKeyChecking=no \
-            -p 65002 \
-            u106460501@houarimed.tech \
-            "mkdir -p /home/u106460501/domains/houarimed.tech/public_html/app"
-
-          # Upload IPA
-          sshpass -p "$SERVER_PASS" scp \
-            -o StrictHostKeyChecking=no \
-            -P 65002 \
-            Forbes_Selfie.ipa \
-            u106460501@houarimed.tech:/home/u106460501/domains/houarimed.tech/public_html/app/Forbes_Selfie.ipa
-
-          echo "✅ IPA uploaded to https://houarimed.tech/app/Forbes_Selfie.ipa"
-
-      # ── 8. Upload install page (only on first push, not on cron) ─────────────
-      - name: Upload Install Page
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        env:
-          SERVER_PASS: ${{ secrets.SERVER_PASS }}
-        run: |
-          sshpass -p "$SERVER_PASS" scp \
-            -o StrictHostKeyChecking=no \
-            -P 65002 \
-            install_page/index.html \
-            u106460501@houarimed.tech:/home/u106460501/domains/houarimed.tech/public_html/app/index.html
-          echo "✅ Install page uploaded to https://houarimed.tech/app/"
+      # ── 8. Upload via FTP (Hostinger supports FTP port 21) ───────────────────
+      - name: Upload to Server via FTP
+        uses: SamKirkland/FTP-Deploy-Action@4.3.4
+        with:
+          server: houarimed.tech
+          username: u106460501
+          password: ${{ secrets.SERVER_PASS }}
+          local-dir: ./ftp_upload/
+          server-dir: /public_html/app/
+          dangerous-clean-slate: false
 
       # ── 9. Save IPA as artifact too ──────────────────────────────────────────
       - name: Upload Artifact
