@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Forbes Selfie — Install</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #07091A;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px env(safe-area-inset-bottom);
+    overflow-x: hidden;
+  }
+
+  /* Glow background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, #0EA5E910 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 24px #0EA5E930; }
+    50%       { box-shadow: 0 0 48px #0EA5E960; }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.6; }
+    50%       { opacity: 1; }
+  }
+
+  .container {
+    width: 100%;
+    max-width: 380px;
+    animation: fadeUp 0.6s ease;
+  }
+
+  /* ── Logo ── */
+  .logo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+
+  .logo-circle {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #0A2540, #070D1C);
+    border: 1.5px solid rgba(14,165,233,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  .logo-circle svg {
+    width: 56px;
+    height: 56px;
+  }
+
+  .brand-title {
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .brand-sub {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 5px;
+    color: #0EA5E9;
+    margin-top: 4px;
+  }
+
+  .brand-desc {
+    font-size: 12px;
+    color: #4A6A8A;
+    margin-top: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #0EA5E9, transparent);
+    margin: 0 32px 28px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: #0A0F1E;
+    border: 1.5px solid #1A2744;
+    border-radius: 24px;
+    padding: 24px 20px;
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  /* Corner brackets */
+  .bracket {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+  }
+  .bracket svg { width: 100%; height: 100%; }
+  .tl { top: 12px; left: 12px; }
+  .tr { top: 12px; right: 12px; }
+  .bl { bottom: 12px; left: 12px; }
+  .br { bottom: 12px; right: 12px; }
+
+  .step-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .step-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0EA5E9, #0055A5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .step-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .step-desc {
+    font-size: 12px;
+    color: #4A6A8A;
+    margin-top: 2px;
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, #0EA5E9, #0055A5);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 8px 24px #0EA5E930;
+  }
+
+  .btn-primary:active {
+    opacity: 0.85;
+    transform: scale(0.98);
+  }
+
+  .btn-ghost {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1.5px solid #1A2744;
+    background: transparent;
+    color: #4A6A8A;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .btn-ghost:active {
+    border-color: #0EA5E9;
+    color: #0EA5E9;
+  }
+
+  /* ── Warning ── */
+  .warning {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #F59E0B;
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+
+  .warning strong { font-weight: 700; }
+
+  /* ── Already has Scarlet notice ── */
+  .already-scarlet {
+    text-align: center;
+    font-size: 12px;
+    color: #4A6A8A;
+    margin-top: 12px;
+    margin-bottom: 4px;
+  }
+
+  /* ── Version badge ── */
+  .version {
+    text-align: center;
+    font-size: 11px;
+    color: #1E3A5F;
+    font-family: monospace;
+    margin-top: 24px;
+  }
+
+  /* ── iOS only notice ── */
+  .ios-only {
+    display: none;
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #EF4444;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Logo -->
+  <div class="logo-wrap">
+    <div class="logo-circle">
+      <!-- Face detection icon (SVG inline) -->
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Face oval -->
+        <ellipse cx="32" cy="32" rx="16" ry="22" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Eyes -->
+        <circle cx="26" cy="29" r="3" fill="#0EA5E9"/>
+        <circle cx="38" cy="29" r="3" fill="#0EA5E9"/>
+        <!-- Smile -->
+        <path d="M24 38 Q32 46 40 38" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <!-- Scan line -->
+        <line x1="16" y1="32" x2="48" y2="32" stroke="#0EA5E9" stroke-width="1.2" stroke-opacity="0.5"/>
+        <!-- Corner brackets (gold) -->
+        <path d="M4 12 L4 4 L12 4" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M52 4 L60 4 L60 12" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 52 L4 60 L12 60" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M60 52 L60 60 L52 60" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="brand-title">FORBES</div>
+    <div class="brand-sub">S E L F I E</div>
+    <div class="brand-desc">Biometric Identity System</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- iOS only warning (shown on Android/desktop) -->
+  <div class="ios-only" id="ios-only">
+    ⚠️ This app is for <strong>iPhone only</strong>. Open this link on your iPhone.
+  </div>
+
+  <!-- Step 1: Install Scarlet (if not installed) -->
+  <div class="card" style="margin-bottom: 12px;">
+    <div class="bracket tl"><svg viewBox="0 0 14 14"><path d="M0,14 L0,0 L14,0" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+    <div class="bracket tr"><svg viewBox="0 0 14 14"><path d="M0,0 L14,0 L14,14" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+    <div class="bracket bl"><svg viewBox="0 0 14 14"><path d="M0,0 L0,14 L14,14" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+    <div class="bracket br"><svg viewBox="0 0 14 14"><path d="M14,0 L14,14 L0,14" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+
+    <div class="step-label">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-title">Install Scarlet</div>
+        <div class="step-desc">Free app installer — mra wahda f l3omr</div>
+      </div>
+    </div>
+    <a href="https://usescarlet.com" class="btn-ghost" id="scarlet-btn">
+      Get Scarlet →
+    </a>
+  </div>
+
+  <!-- Step 2: Install Forbes Selfie -->
+  <div class="card">
+    <div class="bracket tl"><svg viewBox="0 0 14 14"><path d="M0,14 L0,0 L14,0" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+    <div class="bracket tr"><svg viewBox="0 0 14 14"><path d="M0,0 L14,0 L14,14" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+    <div class="bracket bl"><svg viewBox="0 0 14 14"><path d="M0,0 L0,14 L14,14" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+    <div class="bracket br"><svg viewBox="0 0 14 14"><path d="M14,0 L14,14 L0,14" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+
+    <div class="step-label">
+      <div class="step-num" style="background: linear-gradient(135deg,#10B981,#059669);">2</div>
+      <div>
+        <div class="step-title">Install Forbes Selfie</div>
+        <div class="step-desc">Tap the button — install direct f iPhone</div>
+      </div>
+    </div>
+    <a href="scarlet://install?url=https://houarimed.tech/app/Forbes_Selfie.ipa"
+       class="btn-primary" id="install-btn">
+      📲 INSTALL NOW
+    </a>
+
+    <div class="already-scarlet">Already have Scarlet? Tap Install Now directly.</div>
+  </div>
+
+  <!-- Warning -->
+  <div class="warning">
+    ⚠️ <strong>Important:</strong> Ba3d install, sir l
+    <strong>Settings → General → VPN & Device Management</strong>
+    → Trust l Apple ID.
+  </div>
+
+  <div class="version" id="version-text">Forbes Selfie v1.0.0 · iOS 16+</div>
+
+</div>
+
+<script>
+  // Detect if not iOS → show warning
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (!isIOS) {
+    document.getElementById('ios-only').style.display = 'block';
+  }
+
+  // Try to detect if Scarlet is installed (can't really, but we can try)
+  // If user taps install and Scarlet is not installed, it will just fail
+  // So show Scarlet button prominently
+
+  // Show build date (could be injected by CI)
+  var buildDate = document.querySelector('meta[name="build-date"]');
+  if (buildDate) {
+    document.getElementById('version-text').textContent =
+      'Forbes Selfie v1.0.0 · Built ' + buildDate.getAttribute('content');
+  }
+</script>
+
+</body>
+</html>

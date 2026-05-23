@@ -4,6 +4,9 @@ on:
   push:
     branches: [main, master]
   workflow_dispatch:
+  schedule:
+    # Rebuild every 6 days (before 7-day sideload expiry)
+    - cron: '0 8 */6 * *'
 
 jobs:
   build:
@@ -15,11 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── 2. Select latest available Xcode ────────────────────────────────────
+      # ── 2. Select latest Xcode ───────────────────────────────────────────────
       - name: Select Xcode
         run: |
-          echo "Available Xcode versions:"
-          ls /Applications/ | grep Xcode
           XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
           echo "Using: $XCODE"
           sudo xcode-select -s "$XCODE/Contents/Developer"
@@ -31,12 +32,9 @@ jobs:
 
       # ── 4. Generate .xcodeproj ───────────────────────────────────────────────
       - name: Generate Xcode Project
-        run: |
-          xcodegen generate --spec project.yml
-          echo "Generated project files:"
-          ls -la *.xcodeproj/ 2>/dev/null || true
+        run: xcodegen generate --spec project.yml
 
-      # ── 5. Build (with full output, no silent failures) ──────────────────────
+      # ── 5. Build ─────────────────────────────────────────────────────────────
       - name: Build
         run: |
           set -o pipefail
@@ -53,33 +51,66 @@ jobs:
             ONLY_ACTIVE_ARCH=NO \
             build 2>&1
 
-      # ── 6. Debug: show what was built ────────────────────────────────────────
-      - name: Find built app
-        run: |
-          echo "=== Searching for .app ==="
-          find DerivedData/ -name "*.app" -type d 2>/dev/null
-          echo ""
-          echo "=== DerivedData structure ==="
-          find DerivedData/Build/Products/ -maxdepth 3 2>/dev/null || echo "Products dir not found"
-
-      # ── 7. Package .app → .ipa ───────────────────────────────────────────────
+      # ── 6. Package IPA ───────────────────────────────────────────────────────
       - name: Package IPA
         run: |
           APP_PATH=$(find DerivedData/ -name "*.app" -type d | grep -v ".xctest" | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "❌ ERROR: No .app found in DerivedData/"
-            exit 1
+            echo "❌ No .app found"; exit 1
           fi
-          echo "✅ Found app: $APP_PATH"
+          echo "✅ Found: $APP_PATH"
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
-          zip -r Forbes_Selfie_unsigned.ipa Payload/
-          echo "📦 IPA size: $(du -sh Forbes_Selfie_unsigned.ipa)"
+          zip -r Forbes_Selfie.ipa Payload/
+          echo "📦 $(du -sh Forbes_Selfie.ipa)"
 
-      # ── 8. Upload artifact ───────────────────────────────────────────────────
-      - name: Upload IPA
+      # ── 7. Upload IPA to houarimed.tech/app/ ─────────────────────────────────
+      - name: Upload to Server
+        env:
+          SERVER_PASS: ${{ secrets.SERVER_PASS }}
+        run: |
+          # Install sshpass
+          brew install sshpass
+
+          # Create /app/ folder on server if not exists
+          sshpass -p "$SERVER_PASS" ssh \
+            -o StrictHostKeyChecking=no \
+            -p 65002 \
+            u106460501@houarimed.tech \
+            "mkdir -p /home/u106460501/domains/houarimed.tech/public_html/app"
+
+          # Upload IPA
+          sshpass -p "$SERVER_PASS" scp \
+            -o StrictHostKeyChecking=no \
+            -P 65002 \
+            Forbes_Selfie.ipa \
+            u106460501@houarimed.tech:/home/u106460501/domains/houarimed.tech/public_html/app/Forbes_Selfie.ipa
+
+          echo "✅ IPA uploaded to https://houarimed.tech/app/Forbes_Selfie.ipa"
+
+      # ── 8. Upload install page (only on first push, not on cron) ─────────────
+      - name: Upload Install Page
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        env:
+          SERVER_PASS: ${{ secrets.SERVER_PASS }}
+        run: |
+          sshpass -p "$SERVER_PASS" scp \
+            -o StrictHostKeyChecking=no \
+            -P 65002 \
+            install_page/index.html \
+            u106460501@houarimed.tech:/home/u106460501/domains/houarimed.tech/public_html/app/index.html
+          echo "✅ Install page uploaded to https://houarimed.tech/app/"
+
+      # ── 9. Save IPA as artifact too ──────────────────────────────────────────
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Forbes_Selfie_IPA
-          path: Forbes_Selfie_unsigned.ipa
+          path: Forbes_Selfie.ipa
           retention-days: 30
+
+      - name: Done
+        run: |
+          echo "🎉 Forbes Selfie IPA ready!"
+          echo "📲 Install page: https://houarimed.tech/app/"
+          echo "📦 Direct IPA:   https://houarimed.tech/app/Forbes_Selfie.ipa"
