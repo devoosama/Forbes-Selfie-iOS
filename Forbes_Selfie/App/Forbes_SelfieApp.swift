@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct Forbes_SelfieApp: App {
+struct FacePassApp: App {
     var body: some Scene {
         WindowGroup {
             MainView()

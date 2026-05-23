@@ -1,4 +1,4 @@
-name: Build Forbes Selfie IPA
+name: Build FacePass IPA
 
 on:
   push:
@@ -44,8 +44,8 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild \
-            -project Forbes_Selfie.xcodeproj \
-            -scheme Forbes_Selfie \
+            -project FacePass.xcodeproj \
+            -scheme FacePass \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath "$PWD/DerivedData" \
@@ -64,20 +64,20 @@ jobs:
           echo "✅ Found: $APP_PATH"
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
-          zip -r Forbes_Selfie.ipa Payload/
-          echo "📦 $(du -sh Forbes_Selfie.ipa)"
+          zip -r FacePass.ipa Payload/
+          echo "📦 $(du -sh FacePass.ipa)"
 
       # ── 7. Upload IPA to GitHub Releases (tag: latest) ───────────────────────
       - name: Upload IPA to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "Forbes Selfie — Latest Build"
+          name: "FacePass — Latest Build"
           body: |
             📲 **Install on iPhone:**
             1. Open this link on your iPhone: https://${{ github.repository_owner }}.github.io/Forbes-Selfie-iOS/
             2. Tap **Install Now**
-          files: Forbes_Selfie.ipa
+          files: FacePass.ipa
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -87,8 +87,8 @@ jobs:
         run: |
           mkdir -p docs
           # Update IPA URL in install page to use GitHub Release
-          IPA_URL="https://github.com/${{ github.repository }}/releases/latest/download/Forbes_Selfie.ipa"
-          sed "s|https://houarimed.tech/app/Forbes_Selfie.ipa|$IPA_URL|g" \
+          IPA_URL="https://github.com/${{ github.repository }}/releases/latest/download/FacePass.ipa"
+          sed "s|https://houarimed.tech/app/FacePass.ipa|$IPA_URL|g" \
             install_page/index.html > docs/index.html
           echo "✅ Install page ready"
           echo "🔗 IPA URL: $IPA_URL"

@@ -53,7 +53,7 @@ struct MainView: View {
                     Spacer().frame(height: 40)
 
                     // Version
-                    Text("Forbes Selfie v1.0.0")
+                    Text("FacePass v1.0.0")
                         .font(.system(size: 11, weight: .regular, design: .monospaced))
                         .foregroundColor(Color(hex: "#1E3A5F"))
 
@@ -103,12 +103,12 @@ struct MainView: View {
 
             // FORBES SELFIE title
             VStack(spacing: 2) {
-                Text("FORBES")
+                Text("FACE")
                     .font(.system(size: 38, weight: .black, design: .default))
                     .foregroundColor(.white)
                     .tracking(6)
 
-                Text("S E L F I E")
+                Text("P A S S")
                     .font(.system(size: 12, weight: .semibold, design: .monospaced))
                     .foregroundColor(Color(hex: "#0EA5E9"))
                     .tracking(4)

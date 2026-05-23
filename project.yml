@@ -1,7 +1,7 @@
-name: Forbes_Selfie
+name: FacePass
 
 options:
-  bundleIdPrefix: com.forbes
+  bundleIdPrefix: com.facepass
   deploymentTarget:
     iOS: "16.0"
   xcodeVersion: "15.0"
@@ -13,10 +13,9 @@ settings:
     SWIFT_VERSION: "5.0"
     IPHONEOS_DEPLOYMENT_TARGET: "16.0"
     TARGETED_DEVICE_FAMILY: "1,2"
-    PRODUCT_BUNDLE_IDENTIFIER: com.forbes.selfie
+    PRODUCT_BUNDLE_IDENTIFIER: com.facepass.app
     MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: "1"
-    # Disable code signing (build unsigned IPA for sideloading)
     CODE_SIGNING_ALLOWED: "NO"
     CODE_SIGNING_REQUIRED: "NO"
     CODE_SIGN_IDENTITY: ""
@@ -24,11 +23,10 @@ settings:
     ONLY_ACTIVE_ARCH: "NO"
 
 targets:
-  Forbes_Selfie:
+  FacePass:
     type: application
     platform: iOS
 
-    # Source files (Swift)
     sources:
       - path: Forbes_Selfie/App
       - path: Forbes_Selfie/Resources
@@ -40,20 +38,17 @@ targets:
       - path: Forbes_Selfie/Browser
       - path: Forbes_Selfie/Services
 
-    # Resources (bundled into app)
     resources:
       - path: Forbes_Selfie/Assets.xcassets
       - path: Forbes_Selfie/Resources/content.js
       - path: Forbes_Selfie/Resources/liveness.js
 
-    # Info.plist
     info:
       path: Forbes_Selfie/Resources/Info.plist
 
-    # Build settings override
     settings:
       base:
-        PRODUCT_NAME: Forbes_Selfie
+        PRODUCT_NAME: FacePass
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SWIFT_EMIT_LOC_STRINGS: "YES"

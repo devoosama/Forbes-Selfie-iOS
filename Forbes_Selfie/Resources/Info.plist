@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>Forbes Selfie</string>
+    <string>FacePass</string>
     <key>CFBundleDisplayName</key>
-    <string>Forbes Selfie</string>
+    <string>FacePass</string>
     <key>CFBundleIdentifier</key>
     <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleVersion</key>
@@ -36,11 +36,11 @@
 
     <!-- Camera — required for OZ Liveness biometric -->
     <key>NSCameraUsageDescription</key>
-    <string>Forbes Selfie needs camera access to perform biometric face verification for your visa application.</string>
+    <string>FacePass needs camera access to perform biometric face verification for your visa application.</string>
 
     <!-- Microphone — used during liveness check -->
     <key>NSMicrophoneUsageDescription</key>
-    <string>Forbes Selfie needs microphone access during the liveness verification process.</string>
+    <string>FacePass needs microphone access during the liveness verification process.</string>
 
     <!-- Network (ATS) -->
     <key>NSAppTransportSecurity</key>

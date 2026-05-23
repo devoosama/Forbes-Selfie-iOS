@@ -97,7 +97,7 @@ class BrowserViewController: UIViewController {
 
     private func setupNavBar() {
         view.backgroundColor = UIColor(red: 7/255, green: 9/255, blue: 26/255, alpha: 1)
-        title = "Forbes Selfie"
+        title = "FacePass"
         navigationController?.navigationBar.barStyle = .black
         navigationController?.navigationBar.tintColor = UIColor(red: 14/255, green: 165/255, blue: 233/255, alpha: 1)
         navigationController?.navigationBar.titleTextAttributes = [
