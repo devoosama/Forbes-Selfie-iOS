@@ -8,6 +8,11 @@ on:
     # Rebuild every 6 days (before 7-day sideload expiry)
     - cron: '0 8 */6 * *'
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   build:
     name: Build unsigned IPA
@@ -55,48 +60,53 @@ jobs:
       - name: Package IPA
         run: |
           APP_PATH=$(find DerivedData/ -name "*.app" -type d | grep -v ".xctest" | head -1)
-          if [ -z "$APP_PATH" ]; then
-            echo "❌ No .app found"; exit 1
-          fi
+          if [ -z "$APP_PATH" ]; then echo "❌ No .app found"; exit 1; fi
           echo "✅ Found: $APP_PATH"
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
           zip -r Forbes_Selfie.ipa Payload/
           echo "📦 $(du -sh Forbes_Selfie.ipa)"
 
-      # ── 7. Upload via FTP (curl — pre-installed on macOS runner) ────────────
-      - name: Upload to Server via FTP
-        env:
-          SERVER_PASS: ${{ secrets.SERVER_PASS }}
-        run: |
-          FTP_URL="ftp://houarimed.tech"
-          FTP_USER="u106460501"
-          FTP_DIR="domains/houarimed.tech/public_html/app"
-
-          echo "📤 Uploading IPA..."
-          curl --ftp-create-dirs \
-               --user "$FTP_USER:$SERVER_PASS" \
-               -T Forbes_Selfie.ipa \
-               "$FTP_URL/$FTP_DIR/Forbes_Selfie.ipa"
-
-          echo "📤 Uploading install page..."
-          curl --ftp-create-dirs \
-               --user "$FTP_USER:$SERVER_PASS" \
-               -T install_page/index.html \
-               "$FTP_URL/$FTP_DIR/index.html"
-
-          echo "✅ Done → https://houarimed.tech/app/"
-
-      # ── 9. Save IPA as artifact too ──────────────────────────────────────────
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+      # ── 7. Upload IPA to GitHub Releases (tag: latest) ───────────────────────
+      - name: Upload IPA to GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: Forbes_Selfie_IPA
-          path: Forbes_Selfie.ipa
-          retention-days: 30
+          tag_name: latest
+          name: "Forbes Selfie — Latest Build"
+          body: |
+            📲 **Install on iPhone:**
+            1. Open this link on your iPhone: https://${{ github.repository_owner }}.github.io/Forbes-Selfie-iOS/
+            2. Tap **Install Now**
+          files: Forbes_Selfie.ipa
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Done
+      # ── 8. Prepare GitHub Pages install page ────────────────────────────────
+      - name: Prepare Pages
         run: |
-          echo "🎉 Forbes Selfie IPA ready!"
-          echo "📲 Install page: https://houarimed.tech/app/"
-          echo "📦 Direct IPA:   https://houarimed.tech/app/Forbes_Selfie.ipa"
+          mkdir -p docs
+          # Update IPA URL in install page to use GitHub Release
+          IPA_URL="https://github.com/${{ github.repository }}/releases/latest/download/Forbes_Selfie.ipa"
+          sed "s|https://houarimed.tech/app/Forbes_Selfie.ipa|$IPA_URL|g" \
+            install_page/index.html > docs/index.html
+          echo "✅ Install page ready"
+          echo "🔗 IPA URL: $IPA_URL"
+
+      # ── 9. Deploy to GitHub Pages ────────────────────────────────────────────
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+  deploy-pages:
+    name: Deploy install page
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
