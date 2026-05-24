@@ -82,16 +82,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── 8. Prepare GitHub Pages install page ────────────────────────────────
+      # ── 8. Prepare GitHub Pages (copy ALL install_page/ files) ─────────────
       - name: Prepare Pages
         run: |
           mkdir -p docs
-          # Update IPA URL in install page to use GitHub Release
           IPA_URL="https://github.com/${{ github.repository }}/releases/latest/download/FacePass.ipa"
-          sed "s|https://houarimed.tech/app/FacePass.ipa|$IPA_URL|g" \
-            install_page/index.html > docs/index.html
-          echo "✅ Install page ready"
-          echo "🔗 IPA URL: $IPA_URL"
+
+          # Copy ALL files from install_page/ to docs/
+          cp install_page/*.html docs/
+
+          # Update IPA URL in index.html
+          sed -i "s|https://houarimed.tech/app/FacePass.ipa|$IPA_URL|g" docs/index.html
+
+          echo "✅ Pages ready:"
+          ls -la docs/
 
       # ── 9. Deploy to GitHub Pages ────────────────────────────────────────────
       - name: Upload Pages artifact
