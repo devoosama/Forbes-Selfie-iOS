@@ -91,8 +91,8 @@ jobs:
           # Copy ALL files from install_page/ to docs/
           cp install_page/*.html docs/
 
-          # Update IPA URL in index.html
-          sed -i "s|https://houarimed.tech/app/FacePass.ipa|$IPA_URL|g" docs/index.html
+          # Update IPA URL in index.html (macOS sed requires '' after -i)
+          sed -i '' "s|https://houarimed.tech/app/FacePass.ipa|$IPA_URL|g" docs/index.html
 
           echo "✅ Pages ready:"
           ls -la docs/
