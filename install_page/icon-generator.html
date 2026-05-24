@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FacePass — Icon Generator</title>
+<style>
+  body { background:#111; display:flex; flex-direction:column; align-items:center;
+         justify-content:center; min-height:100vh; font-family:sans-serif; gap:20px; }
+  canvas { border-radius: 230px; box-shadow: 0 0 80px #0EA5E940; }
+  button {
+    padding: 14px 40px; background: linear-gradient(135deg,#0EA5E9,#0055A5);
+    color:#fff; border:none; border-radius:12px; font-size:16px;
+    font-weight:700; cursor:pointer; letter-spacing:2px;
+  }
+  p { color:#4A6A8A; font-size:13px; }
+</style>
+</head>
+<body>
+
+<p>FacePass App Icon — 1024×1024</p>
+<canvas id="c" width="1024" height="1024"></canvas>
+<button onclick="download()">⬇ DOWNLOAD PNG</button>
+<p>Save as: AppIcon.png — upload l App Store Connect</p>
+
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = 1024, H = 1024, cx = W/2, cy = H/2;
+
+// ── Background gradient ──────────────────────────────────────────────────────
+const bg = ctx.createRadialGradient(cx, cy*0.6, 0, cx, cy, W*0.7);
+bg.addColorStop(0, '#0A1E38');
+bg.addColorStop(0.5, '#07091A');
+bg.addColorStop(1, '#050710');
+ctx.fillStyle = bg;
+ctx.beginPath();
+ctx.roundRect(0, 0, W, H, 230);
+ctx.fill();
+
+// ── Subtle glow center ───────────────────────────────────────────────────────
+const glow = ctx.createRadialGradient(cx, cy*0.7, 0, cx, cy, W*0.5);
+glow.addColorStop(0, 'rgba(14,165,233,0.08)');
+glow.addColorStop(1, 'transparent');
+ctx.fillStyle = glow;
+ctx.beginPath();
+ctx.roundRect(0, 0, W, H, 230);
+ctx.fill();
+
+// ── Circle bg for icon ───────────────────────────────────────────────────────
+const circleBg = ctx.createRadialGradient(cx, cy*0.85, 0, cx, cy*0.85, 280);
+circleBg.addColorStop(0, '#0A2540');
+circleBg.addColorStop(1, '#070D1C');
+ctx.beginPath();
+ctx.arc(cx, cy*0.82, 270, 0, Math.PI*2);
+ctx.fillStyle = circleBg;
+ctx.fill();
+ctx.strokeStyle = 'rgba(14,165,233,0.6)';
+ctx.lineWidth = 6;
+ctx.stroke();
+
+// ── Shadow/glow on circle ────────────────────────────────────────────────────
+ctx.shadowColor = '#0EA5E9';
+ctx.shadowBlur = 40;
+ctx.beginPath();
+ctx.arc(cx, cy*0.82, 270, 0, Math.PI*2);
+ctx.strokeStyle = 'rgba(14,165,233,0.3)';
+ctx.lineWidth = 2;
+ctx.stroke();
+ctx.shadowBlur = 0;
+
+// ── Face oval ───────────────────────────────────────────────────────────────
+const faceX = cx, faceY = cy*0.80;
+const faceW = 190, faceH = 240;
+ctx.beginPath();
+ctx.ellipse(faceX, faceY, faceW/2, faceH/2, 0, 0, Math.PI*2);
+ctx.strokeStyle = '#FFFFFF';
+ctx.lineWidth = 18;
+ctx.lineCap = 'round';
+ctx.stroke();
+
+// ── Eyes ─────────────────────────────────────────────────────────────────────
+const eyeY = faceY - 30;
+const eyeR = 22;
+// Left eye
+ctx.beginPath();
+ctx.arc(faceX - 52, eyeY, eyeR, 0, Math.PI*2);
+ctx.fillStyle = '#0EA5E9';
+ctx.fill();
+// Right eye
+ctx.beginPath();
+ctx.arc(faceX + 52, eyeY, eyeR, 0, Math.PI*2);
+ctx.fillStyle = '#0EA5E9';
+ctx.fill();
+
+// Eye inner glow
+ctx.shadowColor = '#0EA5E9';
+ctx.shadowBlur = 20;
+ctx.beginPath();
+ctx.arc(faceX - 52, eyeY, eyeR, 0, Math.PI*2);
+ctx.fillStyle = '#38BDF8';
+ctx.fill();
+ctx.beginPath();
+ctx.arc(faceX + 52, eyeY, eyeR, 0, Math.PI*2);
+ctx.fillStyle = '#38BDF8';
+ctx.fill();
+ctx.shadowBlur = 0;
+
+// ── Smile ────────────────────────────────────────────────────────────────────
+ctx.beginPath();
+ctx.moveTo(faceX - 62, faceY + 60);
+ctx.quadraticCurveTo(faceX, faceY + 110, faceX + 62, faceY + 60);
+ctx.strokeStyle = '#FFFFFF';
+ctx.lineWidth = 16;
+ctx.lineCap = 'round';
+ctx.stroke();
+
+// ── Scan line ────────────────────────────────────────────────────────────────
+ctx.beginPath();
+ctx.moveTo(faceX - 95, faceY + 10);
+ctx.lineTo(faceX + 95, faceY + 10);
+ctx.strokeStyle = 'rgba(14,165,233,0.4)';
+ctx.lineWidth = 6;
+ctx.stroke();
+
+// ── Gold corner brackets ─────────────────────────────────────────────────────
+function bracket(x, y, size, dir) {
+  const s = size;
+  ctx.beginPath();
+  ctx.lineWidth = 22;
+  ctx.strokeStyle = '#F59E0B';
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = '#F59E0B';
+  ctx.shadowBlur = 12;
+  if (dir === 'tl') {
+    ctx.moveTo(x, y+s); ctx.lineTo(x, y); ctx.lineTo(x+s, y);
+  } else if (dir === 'tr') {
+    ctx.moveTo(x, y); ctx.lineTo(x+s, y); ctx.lineTo(x+s, y+s);
+  } else if (dir === 'bl') {
+    ctx.moveTo(x, y); ctx.lineTo(x, y+s); ctx.lineTo(x+s, y+s);
+  } else if (dir === 'br') {
+    ctx.moveTo(x, y+s); ctx.lineTo(x+s, y+s); ctx.lineTo(x+s, y);
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+const bm = 80, bs = 120;
+bracket(bm, bm, bs, 'tl');
+bracket(W-bm-bs, bm, bs, 'tr');
+bracket(bm, H-bm-bs, bs, 'bl');
+bracket(W-bm-bs, H-bm-bs, bs, 'br');
+
+// ── FACE text ────────────────────────────────────────────────────────────────
+ctx.shadowBlur = 0;
+ctx.font = '900 148px -apple-system, Arial Black, sans-serif';
+ctx.fillStyle = '#FFFFFF';
+ctx.textAlign = 'center';
+ctx.letterSpacing = '12px';
+ctx.fillText('FACE', cx, H*0.80 + 290);
+
+// ── PASS text ─────────────────────────────────────────────────────────────────
+ctx.font = '600 46px monospace';
+ctx.fillStyle = '#0EA5E9';
+ctx.letterSpacing = '10px';
+ctx.fillText('P A S S', cx, H*0.80 + 350);
+
+// Download
+function download() {
+  // Create rounded version
+  const off = document.createElement('canvas');
+  off.width = 1024; off.height = 1024;
+  const oc = off.getContext('2d');
+  oc.beginPath();
+  oc.roundRect(0, 0, 1024, 1024, 230);
+  oc.clip();
+  oc.drawImage(c, 0, 0);
+  const a = document.createElement('a');
+  a.download = 'FacePass_AppIcon_1024.png';
+  a.href = off.toDataURL('image/png');
+  a.click();
+}
+</script>
+</body>
+</html>

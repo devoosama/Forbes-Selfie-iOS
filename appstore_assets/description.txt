@@ -1,0 +1,98 @@
+════════════════════════════════════════
+FACEPASS — APP STORE LISTING
+════════════════════════════════════════
+
+APP NAME:
+FacePass
+
+SUBTITLE (30 chars max):
+Biometric Face Verification
+
+CATEGORY:
+Utilities (primary)
+Business (secondary)
+
+PRICE:
+$3.99 (one-time)
+
+KEYWORDS (100 chars max):
+biometric,face,selfie,liveness,visa,verification,identity,bls,passport,scan
+
+════════════════════════════════════════
+DESCRIPTION (English)
+════════════════════════════════════════
+
+FacePass — Fast, Secure Biometric Verification
+
+FacePass makes biometric face verification simple and seamless. Designed for visa applicants and identity verification workflows, FacePass delivers a smooth liveness detection experience directly from your iPhone.
+
+HOW IT WORKS:
+• Enter your 4-digit session code
+• FacePass opens a secure biometric session
+• Complete the liveness check in seconds
+• Your verification is instantly confirmed
+
+FEATURES:
+✓ Advanced liveness detection technology
+✓ Secure session-based verification
+✓ Clean, easy-to-use interface
+✓ Works with BLS visa application portals
+✓ Dark mode design
+✓ One-time purchase — no subscription
+
+PERFECT FOR:
+• Visa applicants (Spain, Portugal, and more)
+• Anyone needing biometric identity verification
+• Travel agencies and immigration consultants
+
+Your privacy is our priority. FacePass only accesses your camera during the verification session and never stores your biometric data on-device.
+
+Buy once. Use forever.
+
+════════════════════════════════════════
+DESCRIPTION (French)
+════════════════════════════════════════
+
+FacePass — Vérification biométrique rapide et sécurisée
+
+FacePass simplifie la vérification faciale biométrique. Conçu pour les demandeurs de visa et les workflows de vérification d'identité.
+
+COMMENT ÇA MARCHE :
+• Entrez votre code de session à 4 chiffres
+• FacePass ouvre une session biométrique sécurisée
+• Effectuez la détection de vivacité en quelques secondes
+• Votre vérification est confirmée instantanément
+
+FONCTIONNALITÉS :
+✓ Technologie avancée de détection de vivacité
+✓ Vérification sécurisée par session
+✓ Interface simple et intuitive
+✓ Compatible avec les portails BLS
+✓ Mode sombre
+✓ Achat unique — aucun abonnement
+
+Achetez une fois. Utilisez pour toujours.
+
+════════════════════════════════════════
+PRIVACY POLICY URL:
+https://devoosama.github.io/Forbes-Selfie-iOS/privacy
+
+════════════════════════════════════════
+SUPPORT URL:
+https://devoosama.github.io/Forbes-Selfie-iOS/
+
+════════════════════════════════════════
+WHAT'S NEW (v1.0.0):
+Initial release of FacePass — biometric face verification app.
+
+════════════════════════════════════════
+REVIEW NOTES (for Apple reviewer):
+This app provides biometric liveness verification for visa application portals.
+The app uses a session-based system: users receive a 4-digit code from the BLS
+visa portal, enter it in the app, complete a liveness check, and the result is
+sent back to the portal. Camera access is required for the liveness detection
+process only.
+
+Test account: Not required (session codes are generated externally)
+Demo code for review: The reviewer can use code: 0000 (test mode)
+════════════════════════════════════════
