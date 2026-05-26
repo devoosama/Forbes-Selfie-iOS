@@ -3,18 +3,21 @@ name: Build & Upload to TestFlight
 on:
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   build:
     name: Build signed IPA → TestFlight
     runs-on: macos-14
 
+    permissions:
+      contents: write
+
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────────
+      # ── 1. Checkout (no persistent credentials to avoid polluting brew git) ──
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
       # ── 2. Select latest Xcode ───────────────────────────────────
       - name: Select Xcode
@@ -24,8 +27,12 @@ jobs:
           sudo xcode-select -s "$XCODE/Contents/Developer"
           xcodebuild -version
 
-      # ── 3. Install XcodeGen ──────────────────────────────────────
+      # ── 3. Install XcodeGen (no Homebrew auto-update / git fetch) ──
       - name: Install XcodeGen
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_INSTALL_CLEANUP: "1"
+          HOMEBREW_NO_ANALYTICS: "1"
         run: brew install xcodegen
 
       # ── 4. Generate .xcodeproj ───────────────────────────────────
@@ -36,13 +43,18 @@ jobs:
       - name: Install Fastlane
         run: gem install fastlane --no-document
 
-      # ── 6. Run Fastlane beta lane ────────────────────────────────
+      # ── 6. Prepare build output folder ───────────────────────────
+      - name: Create build folder
+        run: mkdir -p ./build
+
+      # ── 7. Run Fastlane beta lane ────────────────────────────────
       - name: Build & Upload to TestFlight
         env:
-          ASC_KEY_ID:                ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID:             ${{ secrets.ASC_ISSUER_ID }}
-          ASC_KEY_CONTENT:           ${{ secrets.ASC_KEY_CONTENT }}
-          GITHUB_TOKEN:              ${{ secrets.GITHUB_TOKEN }}
-          FASTLANE_SKIP_UPDATE_CHECK: "1"
-          FASTLANE_OPT_OUT_USAGE:    "1"
+          ASC_KEY_ID:                  ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID:               ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_CONTENT:             ${{ secrets.ASC_KEY_CONTENT }}
+          FASTLANE_SKIP_UPDATE_CHECK:  "1"
+          FASTLANE_OPT_OUT_USAGE:      "1"
+          MATCH_SKIP_STORAGE_PUSH:     "1"
+          GIT_TERMINAL_PROMPT:         "0"
         run: fastlane beta
