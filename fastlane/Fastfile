@@ -24,7 +24,7 @@ platform :ios do
       lock_when_sleeps: false
     )
 
-    # ── 3. Revoke ALL existing Distribution certs (limit = 2) ────
+    # ── 3. Revoke ALL existing Distribution certs ────────────────
     require 'spaceship'
     key_content = ENV["ASC_KEY_CONTENT"].to_s.gsub("\\n", "\n")
     Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
@@ -40,7 +40,7 @@ platform :ios do
     UI.message "Revoking #{old_certs.size} existing cert(s)..."
     old_certs.each { |c| c.delete!; UI.success "  Revoked #{c.id}" }
 
-    # ── 4. Create fresh Distribution cert + install in keychain ──
+    # ── 4. Create fresh Distribution cert ────────────────────────
     cert(
       api_key:           api_key,
       keychain_path:     "~/Library/Keychains/build.keychain-db",
@@ -49,25 +49,40 @@ platform :ios do
       force:             true
     )
 
-    # ── 5. Write .p8 to disk for xcodebuild -allowProvisioningUpdates
-    key_path = "/tmp/AuthKey.p8"
-    File.write(key_path, key_content)
+    # ── 5. Provisioning Profile ──────────────────────────────────
+    sigh(
+      api_key:        api_key,
+      app_identifier: "tech.houarimed.facepass",
+      force:          true
+    )
 
-    # ── 6. Build & archive (Xcode auto-manages provisioning profile)
+    # Install profile by UUID → direct file lookup (reliable!)
+    profile_uuid = lane_context[SharedValues::SIGH_UUID]
+    profile_src  = lane_context[SharedValues::SIGH_PROFILE_PATH]
+    profiles_dir = "#{ENV['HOME']}/Library/MobileDevice/Provisioning Profiles"
+    sh "mkdir -p '#{profiles_dir}' && cp '#{profile_src}' '#{profiles_dir}/#{profile_uuid}.mobileprovision'"
+    UI.success "Profile installed: #{profiles_dir}/#{profile_uuid}.mobileprovision"
+
+    # ── 6. Update signing → UUID-based (PROVISIONING_PROFILE, not SPECIFIER)
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path:              "FacePass.xcodeproj",
+      bundle_identifier: "tech.houarimed.facepass",
+      code_sign_identity: "iPhone Distribution",
+      profile_uuid:      profile_uuid
+    )
+
+    # ── 7. Build ─────────────────────────────────────────────────
     gym(
       scheme:           "FacePass",
       configuration:    "Release",
       export_method:    "app-store",
       output_name:      "FacePass.ipa",
       output_directory: "./build",
-      clean:            true,
-      xcargs:           "-allowProvisioningUpdates " \
-                        "-authenticationKeyPath #{key_path} " \
-                        "-authenticationKeyID #{ENV['ASC_KEY_ID']} " \
-                        "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}"
+      clean:            true
     )
 
-    # ── 7. Upload to TestFlight ──────────────────────────────────
+    # ── 8. Upload to TestFlight ──────────────────────────────────
     pilot(
       api_key:                           api_key,
       ipa:                               "./build/FacePass.ipa",
