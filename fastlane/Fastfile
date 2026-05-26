@@ -14,11 +14,46 @@ platform :ios do
       in_house:     false
     )
 
-    # ── 2. Write .p8 key to disk (xcodebuild needs a file path) ──
-    key_path = "/tmp/AuthKey.p8"
-    File.write(key_path, ENV["ASC_KEY_CONTENT"].to_s.gsub("\\n", "\n"))
+    # ── 2. Temporary keychain ────────────────────────────────────
+    create_keychain(
+      name:             "build.keychain",
+      password:         "temppass123",
+      default_keychain: true,
+      unlock:           true,
+      timeout:          3600,
+      lock_when_sleeps: false
+    )
 
-    # ── 3. Build + export IPA (Xcode handles cert/profile auto) ──
+    # ── 3. Revoke ALL existing Distribution certs (limit = 2) ────
+    require 'spaceship'
+    key_content = ENV["ASC_KEY_CONTENT"].to_s.gsub("\\n", "\n")
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id:    ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key:       key_content,
+      duration:  1200,
+      in_house:  false
+    )
+    old_certs = Spaceship::ConnectAPI::Certificate.all(
+      filter: { certificateType: "IOS_DISTRIBUTION" }
+    )
+    UI.message "Revoking #{old_certs.size} existing cert(s)..."
+    old_certs.each { |c| c.delete!; UI.success "  Revoked #{c.id}" }
+
+    # ── 4. Create fresh Distribution cert + install in keychain ──
+    cert(
+      api_key:           api_key,
+      keychain_path:     "~/Library/Keychains/build.keychain-db",
+      keychain_password: "temppass123",
+      output_path:       "./build",
+      force:             true
+    )
+
+    # ── 5. Write .p8 to disk for xcodebuild -allowProvisioningUpdates
+    key_path = "/tmp/AuthKey.p8"
+    File.write(key_path, key_content)
+
+    # ── 6. Build & archive (Xcode auto-manages provisioning profile)
     gym(
       scheme:           "FacePass",
       configuration:    "Release",
@@ -32,7 +67,7 @@ platform :ios do
                         "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}"
     )
 
-    # ── 4. Upload to TestFlight ──────────────────────────────────
+    # ── 7. Upload to TestFlight ──────────────────────────────────
     pilot(
       api_key:                           api_key,
       ipa:                               "./build/FacePass.ipa",
