@@ -82,6 +82,8 @@ jobs:
           grep "TARGETED_DEVICE_FAMILY" FacePass.xcodeproj/project.pbxproj || echo "NOT FOUND"
           echo "=== Info.plist source keys ==="
           grep -E "CFBundleIconName|ipad|UILaunchScreen" Forbes_Selfie/Resources/Info.plist || echo "NOT FOUND in source"
+          echo "=== Asset catalog file type (must be folder.assetcatalog) ==="
+          grep -A2 "xcassets" FacePass.xcodeproj/project.pbxproj | grep "lastKnownFileType\|fileType" | head -5 || echo "NOT FOUND"
 
       # ── 5. Install Fastlane ──────────────────────────────────────
       - name: Install Fastlane

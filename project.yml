@@ -35,9 +35,12 @@ targets:
       - path: Forbes_Selfie/ViewModels
       - path: Forbes_Selfie/Browser
       - path: Forbes_Selfie/Services
+      # xcassets MUST be in sources so XcodeGen assigns lastKnownFileType =
+      # "folder.assetcatalog" — in resources it becomes a plain "folder" and
+      # Xcode never invokes actool, so Assets.car is never produced.
+      - path: Forbes_Selfie/Assets.xcassets
 
     resources:
-      - path: Forbes_Selfie/Assets.xcassets
       - path: Forbes_Selfie/Resources/content.js
       - path: Forbes_Selfie/Resources/liveness.js
 
@@ -46,6 +49,7 @@ targets:
         PRODUCT_NAME: FacePass
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ASSETCATALOG_COMPILER_STANDALONE_ICON_BEHAVIOR: "all"
         SWIFT_EMIT_LOC_STRINGS: "YES"
         GENERATE_INFOPLIST_FILE: "NO"
         DEVELOPMENT_TEAM: "8RSCHWPSQP"

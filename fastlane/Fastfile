@@ -105,8 +105,10 @@ platform :ios do
       if File.exist?(plist)
         UI.message "=== Info.plist in IPA ==="
         sh "plutil -p '#{plist}' 2>&1"
-        UI.message "=== App bundle files ==="
-        sh "ls '/tmp/ipa_inspect/Payload/FacePass.app/' 2>&1 | head -40"
+        UI.message "=== App bundle files (flat) ==="
+        sh "ls '/tmp/ipa_inspect/Payload/FacePass.app/' 2>&1"
+        UI.message "=== Assets.car present? ==="
+        sh "ls -lh '/tmp/ipa_inspect/Payload/FacePass.app/Assets.car' 2>&1 || echo 'Assets.car MISSING'"
       else
         UI.error "Info.plist NOT FOUND at #{plist}"
         sh "find /tmp/ipa_inspect -name 'Info.plist' 2>&1 | head -10"
