@@ -32,15 +32,9 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate --spec project.yml
 
-      # ── 5. Setup Ruby + Fastlane ─────────────────────────────────
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-
+      # ── 5. Install Fastlane ──────────────────────────────────────
       - name: Install Fastlane
-        run: bundle install
+        run: gem install fastlane --no-document
 
       # ── 6. Run Fastlane beta lane ────────────────────────────────
       - name: Build & Upload to TestFlight
@@ -48,4 +42,4 @@ jobs:
           ASC_KEY_ID:      ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID:   ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
-        run: bundle exec fastlane beta
+        run: fastlane beta
