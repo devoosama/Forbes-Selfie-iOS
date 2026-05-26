@@ -29,7 +29,8 @@ platform :ios do
       api_key:           api_key,
       keychain_path:     "~/Library/Keychains/build.keychain-db",
       keychain_password: "temppass123",
-      output_path:       "./build"
+      output_path:       "./build",
+      force:             true
     )
 
     # ── 4. Provisioning Profile ──────────────────────────────────
