@@ -39,6 +39,18 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate --spec project.yml
 
+      # ── 4b. Debug: verify generated project settings ────────────
+      - name: Debug – generated project settings
+        run: |
+          echo "=== INFOPLIST_FILE ==="
+          grep "INFOPLIST_FILE" FacePass.xcodeproj/project.pbxproj | grep -v "//" || echo "NOT FOUND"
+          echo "=== GENERATE_INFOPLIST_FILE ==="
+          grep "GENERATE_INFOPLIST_FILE" FacePass.xcodeproj/project.pbxproj || echo "NOT FOUND"
+          echo "=== TARGETED_DEVICE_FAMILY ==="
+          grep "TARGETED_DEVICE_FAMILY" FacePass.xcodeproj/project.pbxproj || echo "NOT FOUND"
+          echo "=== Info.plist source keys ==="
+          grep -E "CFBundleIconName|ipad|UILaunchScreen" Forbes_Selfie/Resources/Info.plist || echo "NOT FOUND in source"
+
       # ── 5. Install Fastlane ──────────────────────────────────────
       - name: Install Fastlane
         run: gem install fastlane --no-document

@@ -95,6 +95,22 @@ platform :ios do
       xcargs:           "OTHER_CODE_SIGN_FLAGS='--keychain #{keychain_path}'"
     )
 
+    # ── 7b. Debug: inspect IPA contents before upload ────────────
+    begin
+      sh "unzip -o './build/FacePass.ipa' -d '/tmp/ipa_inspect' 2>&1 | tail -5"
+      plist = "/tmp/ipa_inspect/Payload/FacePass.app/Info.plist"
+      if File.exist?(plist)
+        UI.message "=== Info.plist in IPA ==="
+        sh "plutil -p '#{plist}' 2>&1"
+        UI.message "=== App bundle files ==="
+        sh "ls '/tmp/ipa_inspect/Payload/FacePass.app/' 2>&1 | head -40"
+      else
+        UI.error "Info.plist NOT FOUND at #{plist}"
+      end
+    rescue => e
+      UI.error "IPA inspection failed: #{e.message}"
+    end
+
     # ── 8. Upload to TestFlight ──────────────────────────────────
     pilot(
       api_key:                           api_key,
