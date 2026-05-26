@@ -26,24 +26,23 @@ platform :ios do
 
     # ── 3. Revoke old distribution certs (Apple limit = 2) ──────
     require 'spaceship'
-    begin
-      Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
-        key_id:    api_key[:key_id],
-        issuer_id: api_key[:issuer_id],
-        key:       api_key[:key],
-        duration:  1200,
-        in_house:  false
-      )
-      old_certs = Spaceship::ConnectAPI::Certificate.all(
-        filter: { certificateType: "IOS_DISTRIBUTION" }
-      )
-      old_certs.each do |c|
-        UI.message "Revoking old cert #{c.id} (#{c.display_name})..."
-        c.delete!
-      end
-      UI.success "Revoked #{old_certs.size} old cert(s)." if old_certs.any?
-    rescue => e
-      UI.important "Could not auto-revoke old certs: #{e.message}"
+    UI.message "Checking for existing Distribution certs to revoke..."
+    key_content = ENV["ASC_KEY_CONTENT"].to_s.gsub("\\n", "\n")
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id:    ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key:       key_content,
+      duration:  1200,
+      in_house:  false
+    )
+    old_certs = Spaceship::ConnectAPI::Certificate.all(
+      filter: { certificateType: "IOS_DISTRIBUTION" }
+    )
+    UI.message "Found #{old_certs.size} Distribution cert(s) to revoke"
+    old_certs.each do |c|
+      UI.message "Revoking #{c.id}..."
+      c.delete!
+      UI.success "  → Revoked #{c.id}"
     end
 
     # ── 4. Distribution Certificate ──────────────────────────────
