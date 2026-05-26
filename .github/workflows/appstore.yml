@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     name: Build signed IPA → TestFlight
-    runs-on: macos-14
+    runs-on: macos-15
 
     permissions:
       contents: write
@@ -26,6 +26,34 @@ jobs:
           echo "Using: $XCODE"
           sudo xcode-select -s "$XCODE/Contents/Developer"
           xcodebuild -version
+
+      # ── 2b. Generate placeholder App Icons (120x120, 180x180, 1024x1024) ──
+      - name: Generate App Icons
+        run: |
+          python3 << 'PYEOF'
+          import struct, zlib
+
+          def create_png(w, h):
+              def chunk(t, d):
+                  c = t + d
+                  return struct.pack('>I', len(d)) + c + struct.pack('>I', zlib.crc32(c) & 0xffffffff)
+              sig  = b'\x89PNG\r\n\x1a\n'
+              ihdr = chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0))
+              row  = b'\x00' + bytes([7, 9, 26] * w)   # dark-navy RGB, no filter
+              idat = chunk(b'IDAT', zlib.compress(row * h, 1))
+              iend = chunk(b'IEND', b'')
+              return sig + ihdr + idat + iend
+
+          base = 'Forbes_Selfie/Assets.xcassets/AppIcon.appiconset/'
+          for fname, w, h in [
+              ('AppIcon-1024.png',  1024, 1024),
+              ('AppIcon-60@2x.png',  120,  120),
+              ('AppIcon-60@3x.png',  180,  180),
+          ]:
+              with open(base + fname, 'wb') as f:
+                  f.write(create_png(w, h))
+              print(f'Created {fname}')
+          PYEOF
 
       # ── 3. Install XcodeGen (no Homebrew auto-update / git fetch) ──
       - name: Install XcodeGen

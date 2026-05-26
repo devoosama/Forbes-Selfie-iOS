@@ -53,7 +53,7 @@ platform :ios do
     kc_path = File.expand_path("~/Library/Keychains/build.keychain-db")
     cert_output = sh("security find-identity -v -p codesigning '#{kc_path}' 2>&1", log: false).strip
     UI.message "Keychain identities:\n#{cert_output}"
-    team_match = cert_output.match(/iPhone Distribution:.+?\(([A-Z0-9]{10})\)/)
+    team_match = cert_output.match(/(?:iPhone|Apple) Distribution:.+?\(([A-Z0-9]{10})\)/)
     actual_team_id = team_match ? team_match[1] : nil
     UI.success "Team ID from certificate: #{actual_team_id}"
     update_project_team(path: "FacePass.xcodeproj", teamid: actual_team_id) if actual_team_id
@@ -77,7 +77,7 @@ platform :ios do
       use_automatic_signing: false,
       path:              "FacePass.xcodeproj",
       bundle_identifier: "tech.houarimed.facepass",
-      code_sign_identity: "iPhone Distribution",
+      code_sign_identity: "Apple Distribution",
       profile_uuid:      profile_uuid
     )
 
