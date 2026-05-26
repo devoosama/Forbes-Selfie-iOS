@@ -80,6 +80,10 @@
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
 
+    <!-- Encryption compliance: app uses only standard iOS HTTPS/TLS (exempt) -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+
     <!-- Dark launch screen -->
     <key>UILaunchScreen</key>
     <dict>
