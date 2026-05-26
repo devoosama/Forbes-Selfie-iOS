@@ -73,13 +73,15 @@ platform :ios do
     )
 
     # ── 7. Build ─────────────────────────────────────────────────
+    keychain_path = File.expand_path("~/Library/Keychains/build.keychain-db")
     gym(
       scheme:           "FacePass",
       configuration:    "Release",
       export_method:    "app-store",
       output_name:      "FacePass.ipa",
       output_directory: "./build",
-      clean:            true
+      clean:            true,
+      xcargs:           "OTHER_CODE_SIGN_FLAGS='--keychain #{keychain_path}'"
     )
 
     # ── 8. Upload to TestFlight ──────────────────────────────────
