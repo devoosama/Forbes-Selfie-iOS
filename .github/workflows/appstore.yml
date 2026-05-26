@@ -19,6 +19,19 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: false
 
+      # ── 1b. Normalize App Icon PNG (Windows PNGs can have metadata/alpha ──
+      #        that actool silently rejects; sips re-encodes as clean macOS PNG)
+      - name: Normalize App Icon PNG for actool
+        run: |
+          ICON="Forbes_Selfie/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png"
+          echo "=== Before normalization ==="
+          file "$ICON"
+          sips -g pixelWidth -g pixelHeight -g bitsPerSample -g hasAlpha "$ICON"
+          sips -s format png "$ICON" --out "$ICON"
+          echo "=== After normalization ==="
+          file "$ICON"
+          sips -g pixelWidth -g pixelHeight -g bitsPerSample -g hasAlpha "$ICON"
+
       # ── 2. Select latest Xcode ───────────────────────────────────
       - name: Select Xcode
         run: |
