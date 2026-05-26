@@ -14,83 +14,30 @@ platform :ios do
       in_house:     false
     )
 
-    # ── 2. Temporary keychain ────────────────────────────────────
-    create_keychain(
-      name:             "build.keychain",
-      password:         "temppass123",
-      default_keychain: true,
-      unlock:           true,
-      timeout:          3600,
-      lock_when_sleeps: false
-    )
+    # ── 2. Write .p8 key to disk (xcodebuild needs a file path) ──
+    key_path = "/tmp/AuthKey.p8"
+    File.write(key_path, ENV["ASC_KEY_CONTENT"].to_s.gsub("\\n", "\n"))
 
-    # ── 3. Revoke old distribution certs (Apple limit = 2) ──────
-    require 'spaceship'
-    UI.message "Checking for existing Distribution certs to revoke..."
-    key_content = ENV["ASC_KEY_CONTENT"].to_s.gsub("\\n", "\n")
-    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
-      key_id:    ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key:       key_content,
-      duration:  1200,
-      in_house:  false
-    )
-    old_certs = Spaceship::ConnectAPI::Certificate.all(
-      filter: { certificateType: "IOS_DISTRIBUTION" }
-    )
-    UI.message "Found #{old_certs.size} Distribution cert(s) to revoke"
-    old_certs.each do |c|
-      UI.message "Revoking #{c.id}..."
-      c.delete!
-      UI.success "  → Revoked #{c.id}"
-    end
-
-    # ── 4. Distribution Certificate ──────────────────────────────
-    cert(
-      api_key:           api_key,
-      keychain_path:     "~/Library/Keychains/build.keychain-db",
-      keychain_password: "temppass123",
-      output_path:       "./build",
-      force:             true
-    )
-
-    # ── 5. Provisioning Profile ──────────────────────────────────
-    sigh(
-      api_key:        api_key,
-      app_identifier: "tech.houarimed.facepass",
-      force:          true
-    )
-
-    # Ensure profile is in the system directory Xcode searches
-    sh "mkdir -p ~/Library/MobileDevice/'Provisioning Profiles' && " \
-       "cp '#{lane_context[SharedValues::SIGH_PROFILE_PATH]}' " \
-       "~/Library/MobileDevice/'Provisioning Profiles'/#{lane_context[SharedValues::SIGH_UUID]}.mobileprovision"
-
-    # ── 5. Update signing settings ───────────────────────────────
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      path:             "FacePass.xcodeproj",
-      bundle_identifier: "tech.houarimed.facepass",
-      code_sign_identity: "iPhone Distribution",
-      profile_name:     lane_context[SharedValues::SIGH_NAME]
-    )
-
-    # ── 6. Build ─────────────────────────────────────────────────
+    # ── 3. Build + export IPA (Xcode handles cert/profile auto) ──
     gym(
       scheme:           "FacePass",
       configuration:    "Release",
       export_method:    "app-store",
       output_name:      "FacePass.ipa",
       output_directory: "./build",
-      clean:            true
+      clean:            true,
+      xcargs:           "-allowProvisioningUpdates " \
+                        "-authenticationKeyPath #{key_path} " \
+                        "-authenticationKeyID #{ENV['ASC_KEY_ID']} " \
+                        "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}"
     )
 
-    # ── 7. Upload to TestFlight ──────────────────────────────────
+    # ── 4. Upload to TestFlight ──────────────────────────────────
     pilot(
-      api_key:                          api_key,
-      ipa:                              "./build/FacePass.ipa",
+      api_key:                           api_key,
+      ipa:                               "./build/FacePass.ipa",
       skip_waiting_for_build_processing: true,
-      changelog:                        "Initial beta release"
+      changelog:                         "Initial beta release"
     )
 
   end
