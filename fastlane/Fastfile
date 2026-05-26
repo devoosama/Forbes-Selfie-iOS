@@ -97,7 +97,8 @@ platform :ios do
 
     # ── 7b. Debug: inspect IPA contents before upload ────────────
     begin
-      sh "unzip -o './build/FacePass.ipa' -d '/tmp/ipa_inspect' 2>&1 | tail -5"
+      ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
+      sh "unzip -o '#{ipa_path}' -d '/tmp/ipa_inspect' 2>&1 | tail -5"
       plist = "/tmp/ipa_inspect/Payload/FacePass.app/Info.plist"
       if File.exist?(plist)
         UI.message "=== Info.plist in IPA ==="

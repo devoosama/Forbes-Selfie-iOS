@@ -40,7 +40,6 @@ targets:
       - path: Forbes_Selfie/Assets.xcassets
       - path: Forbes_Selfie/Resources/content.js
       - path: Forbes_Selfie/Resources/liveness.js
-      - path: Forbes_Selfie/Resources/Info.plist
 
     settings:
       base:
