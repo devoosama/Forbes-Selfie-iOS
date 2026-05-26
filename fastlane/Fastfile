@@ -1,0 +1,70 @@
+default_platform(:ios)
+
+platform :ios do
+
+  desc "Build signed IPA and upload to TestFlight"
+  lane :beta do
+
+    # ── 1. API Key ───────────────────────────────────────────────
+    api_key = app_store_connect_api_key(
+      key_id:       ENV["ASC_KEY_ID"],
+      issuer_id:    ENV["ASC_ISSUER_ID"],
+      key_content:  ENV["ASC_KEY_CONTENT"],
+      duration:     1200,
+      in_house:     false
+    )
+
+    # ── 2. Temporary keychain ────────────────────────────────────
+    create_keychain(
+      name:             "build.keychain",
+      password:         "temppass123",
+      default_keychain: true,
+      unlock:           true,
+      timeout:          3600,
+      lock_when_sleeps: false
+    )
+
+    # ── 3. Distribution Certificate ──────────────────────────────
+    cert(
+      api_key:          api_key,
+      keychain_path:    "~/Library/Keychains/build.keychain-db",
+      keychain_password: "temppass123"
+    )
+
+    # ── 4. Provisioning Profile ──────────────────────────────────
+    sigh(
+      api_key:        api_key,
+      app_identifier: "tech.houarimed.facepass",
+      force:          true
+    )
+
+    # ── 5. Update signing settings ───────────────────────────────
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path:             "FacePass.xcodeproj",
+      bundle_identifier: "tech.houarimed.facepass",
+      code_sign_identity: "iPhone Distribution",
+      profile_name:     lane_context[SharedValues::SIGH_PROFILE_FILE_NAME]&.gsub(".mobileprovision", "")
+    )
+
+    # ── 6. Build ─────────────────────────────────────────────────
+    gym(
+      scheme:           "FacePass",
+      configuration:    "Release",
+      export_method:    "app-store",
+      output_name:      "FacePass.ipa",
+      output_directory: "./build",
+      clean:            true
+    )
+
+    # ── 7. Upload to TestFlight ──────────────────────────────────
+    pilot(
+      api_key:                          api_key,
+      ipa:                              "./build/FacePass.ipa",
+      skip_waiting_for_build_processing: true,
+      changelog:                        "Initial beta release"
+    )
+
+  end
+
+end
