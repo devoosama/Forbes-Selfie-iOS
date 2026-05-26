@@ -24,7 +24,29 @@ platform :ios do
       lock_when_sleeps: false
     )
 
-    # ── 3. Distribution Certificate ──────────────────────────────
+    # ── 3. Revoke old distribution certs (Apple limit = 2) ──────
+    require 'spaceship'
+    begin
+      Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+        key_id:    api_key[:key_id],
+        issuer_id: api_key[:issuer_id],
+        key:       api_key[:key],
+        duration:  1200,
+        in_house:  false
+      )
+      old_certs = Spaceship::ConnectAPI::Certificate.all(
+        filter: { certificateType: "IOS_DISTRIBUTION" }
+      )
+      old_certs.each do |c|
+        UI.message "Revoking old cert #{c.id} (#{c.display_name})..."
+        c.delete!
+      end
+      UI.success "Revoked #{old_certs.size} old cert(s)." if old_certs.any?
+    rescue => e
+      UI.important "Could not auto-revoke old certs: #{e.message}"
+    end
+
+    # ── 4. Distribution Certificate ──────────────────────────────
     cert(
       api_key:           api_key,
       keychain_path:     "~/Library/Keychains/build.keychain-db",
@@ -33,7 +55,7 @@ platform :ios do
       force:             true
     )
 
-    # ── 4. Provisioning Profile ──────────────────────────────────
+    # ── 5. Provisioning Profile ──────────────────────────────────
     sigh(
       api_key:        api_key,
       app_identifier: "tech.houarimed.facepass",
