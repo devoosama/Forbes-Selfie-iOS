@@ -25,10 +25,19 @@
     <key>LSRequiresIPhoneOS</key>
     <true/>
 
-    <!-- Orientation (portrait only, iPhone) -->
+    <!-- iPhone: portrait only -->
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
+    </array>
+
+    <!-- iPad: all orientations required for multitasking -->
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
 
     <!-- Camera — required for OZ Liveness biometric -->

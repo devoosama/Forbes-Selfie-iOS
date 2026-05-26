@@ -24,69 +24,17 @@ platform :ios do
       lock_when_sleeps: false
     )
 
-    # ── 3. Revoke ALL existing Distribution certs ────────────────
-    require 'spaceship'
+    # ── 3. Write .p8 key for xcodebuild -allowProvisioningUpdates ─
+    key_id      = ENV["ASC_KEY_ID"]
+    issuer_id   = ENV["ASC_ISSUER_ID"]
     key_content = ENV["ASC_KEY_CONTENT"].to_s.gsub("\\n", "\n")
-    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
-      key_id:    ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key:       key_content,
-      duration:  1200,
-      in_house:  false
-    )
-    # Revoke both legacy "iPhone Distribution" (IOS_DISTRIBUTION)
-    # and newer "Apple Distribution" (DISTRIBUTION) certs
-    old_certs = []
-    ["IOS_DISTRIBUTION", "DISTRIBUTION"].each do |cert_type|
-      found = Spaceship::ConnectAPI::Certificate.all(filter: { certificateType: cert_type })
-      UI.message "  #{cert_type}: #{found.size} cert(s)"
-      old_certs += found
-    end
-    UI.message "Revoking #{old_certs.size} existing cert(s)..."
-    old_certs.each { |c| c.delete!; UI.success "  Revoked #{c.id}" }
+    key_dir     = File.expand_path("~/private_keys")
+    sh "mkdir -p '#{key_dir}'"
+    key_file = "#{key_dir}/AuthKey_#{key_id}.p8"
+    File.write(key_file, key_content)
+    UI.success "API key written: #{key_file}"
 
-    # ── 4. Create fresh Distribution cert ────────────────────────
-    cert(
-      api_key:           api_key,
-      keychain_path:     "~/Library/Keychains/build.keychain-db",
-      keychain_password: "temppass123",
-      output_path:       "./build",
-      force:             true
-    )
-
-    # ── 4b. Read actual Team ID from the installed cert ──────────
-    kc_path = File.expand_path("~/Library/Keychains/build.keychain-db")
-    cert_output = sh("security find-identity -v -p codesigning '#{kc_path}' 2>&1", log: false).strip
-    UI.message "Keychain identities:\n#{cert_output}"
-    team_match = cert_output.match(/(?:iPhone|Apple) Distribution:.+?\(([A-Z0-9]{10})\)/)
-    actual_team_id = team_match ? team_match[1] : nil
-    UI.success "Team ID from certificate: #{actual_team_id}"
-    update_project_team(path: "FacePass.xcodeproj", teamid: actual_team_id) if actual_team_id
-
-    # ── 5. Provisioning Profile ──────────────────────────────────
-    sigh(
-      api_key:        api_key,
-      app_identifier: "tech.houarimed.facepass",
-      force:          true
-    )
-
-    # Install profile by UUID → direct file lookup (reliable!)
-    profile_uuid = lane_context[SharedValues::SIGH_UUID]
-    profile_src  = lane_context[SharedValues::SIGH_PROFILE_PATH]
-    profiles_dir = "#{ENV['HOME']}/Library/MobileDevice/Provisioning Profiles"
-    sh "mkdir -p '#{profiles_dir}' && cp '#{profile_src}' '#{profiles_dir}/#{profile_uuid}.mobileprovision'"
-    UI.success "Profile installed: #{profiles_dir}/#{profile_uuid}.mobileprovision"
-
-    # ── 6. Update signing → UUID-based (PROVISIONING_PROFILE, not SPECIFIER)
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      path:              "FacePass.xcodeproj",
-      bundle_identifier: "tech.houarimed.facepass",
-      code_sign_identity: "Apple Distribution",
-      profile_uuid:      profile_uuid
-    )
-
-    # ── 7. Build ─────────────────────────────────────────────────
+    # ── 4. Build with automatic signing ──────────────────────────
     keychain_path = File.expand_path("~/Library/Keychains/build.keychain-db")
     gym(
       scheme:           "FacePass",
@@ -95,10 +43,23 @@ platform :ios do
       output_name:      "FacePass.ipa",
       output_directory: "./build",
       clean:            true,
-      xcargs:           "OTHER_CODE_SIGN_FLAGS='--keychain #{keychain_path}'"
+      xcargs: [
+        "DEVELOPMENT_TEAM=8RSCHWPSQP",
+        "CODE_SIGN_STYLE=Automatic",
+        "OTHER_CODE_SIGN_FLAGS='--keychain #{keychain_path}'",
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath '#{key_file}'",
+        "-authenticationKeyID #{key_id}",
+        "-authenticationKeyIssuerID #{issuer_id}"
+      ].join(" "),
+      export_options: {
+        method:       "app-store",
+        teamID:       "8RSCHWPSQP",
+        signingStyle: "automatic"
+      }
     )
 
-    # ── 8. Upload to TestFlight ──────────────────────────────────
+    # ── 5. Upload to TestFlight ──────────────────────────────────
     pilot(
       api_key:                           api_key,
       ipa:                               "./build/FacePass.ipa",
