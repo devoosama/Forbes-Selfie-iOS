@@ -26,16 +26,18 @@ platform :ios do
 
     # ── 3. Distribution Certificate ──────────────────────────────
     cert(
-      api_key:          api_key,
-      keychain_path:    "~/Library/Keychains/build.keychain-db",
-      keychain_password: "temppass123"
+      api_key:           api_key,
+      keychain_path:     "~/Library/Keychains/build.keychain-db",
+      keychain_password: "temppass123",
+      output_path:       "./build"
     )
 
     # ── 4. Provisioning Profile ──────────────────────────────────
     sigh(
       api_key:        api_key,
       app_identifier: "tech.houarimed.facepass",
-      force:          true
+      force:          true,
+      output_path:    "./build"
     )
 
     # ── 5. Update signing settings ───────────────────────────────
