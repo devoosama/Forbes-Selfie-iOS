@@ -19,18 +19,37 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: false
 
-      # ── 1b. Normalize App Icon PNG (Windows PNGs can have metadata/alpha ──
-      #        that actool silently rejects; sips re-encodes as clean macOS PNG)
-      - name: Normalize App Icon PNG for actool
+      # ── 1b. Generate all icon sizes from 1024px source using sips ──────
+      #  The "universal" single-icon format only writes to Assets.car;
+      #  the old explicit-size format forces actool to also write loose
+      #  PNG files into the app bundle (required by altool validation).
+      - name: Generate App Icon sizes
         run: |
-          ICON="Forbes_Selfie/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png"
-          echo "=== Before normalization ==="
-          file "$ICON"
-          sips -g pixelWidth -g pixelHeight -g bitsPerSample -g hasAlpha "$ICON"
-          sips -s format png "$ICON" --out "$ICON"
-          echo "=== After normalization ==="
-          file "$ICON"
-          sips -g pixelWidth -g pixelHeight -g bitsPerSample -g hasAlpha "$ICON"
+          SRC="Forbes_Selfie/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png"
+          DIR="Forbes_Selfie/Assets.xcassets/AppIcon.appiconset"
+          # Re-encode source as clean macOS PNG (strips Windows metadata)
+          sips -s format png "$SRC" --out "$SRC"
+          # iPhone icons  (sips -z takes height then width)
+          sips -z  40  40 "$SRC" --out "$DIR/Icon-20@2x.png"
+          sips -z  60  60 "$SRC" --out "$DIR/Icon-20@3x.png"
+          sips -z  58  58 "$SRC" --out "$DIR/Icon-29@2x.png"
+          sips -z  87  87 "$SRC" --out "$DIR/Icon-29@3x.png"
+          sips -z  80  80 "$SRC" --out "$DIR/Icon-40@2x.png"
+          sips -z 120 120 "$SRC" --out "$DIR/Icon-40@3x.png"
+          sips -z 120 120 "$SRC" --out "$DIR/Icon-60@2x.png"
+          sips -z 180 180 "$SRC" --out "$DIR/Icon-60@3x.png"
+          # iPad icons
+          sips -z  20  20 "$SRC" --out "$DIR/Icon-ipad-20@1x.png"
+          sips -z  40  40 "$SRC" --out "$DIR/Icon-ipad-20@2x.png"
+          sips -z  29  29 "$SRC" --out "$DIR/Icon-ipad-29@1x.png"
+          sips -z  58  58 "$SRC" --out "$DIR/Icon-ipad-29@2x.png"
+          sips -z  40  40 "$SRC" --out "$DIR/Icon-ipad-40@1x.png"
+          sips -z  80  80 "$SRC" --out "$DIR/Icon-ipad-40@2x.png"
+          sips -z  76  76 "$SRC" --out "$DIR/Icon-ipad-76@1x.png"
+          sips -z 152 152 "$SRC" --out "$DIR/Icon-ipad-76@2x.png"
+          sips -z 167 167 "$SRC" --out "$DIR/Icon-ipad-83.5@2x.png"
+          echo "=== Generated icons ==="
+          ls -la "$DIR/"*.png
 
       # ── 2. Select latest Xcode ───────────────────────────────────
       - name: Select Xcode
