@@ -116,26 +116,45 @@ class BrowserViewController: UIViewController {
     }
 
     private func loadURL() {
-        // OZ SDK returns raw JavaScript — WKWebView can't load it as a page.
-        // Solution: generate an HTML wrapper in Swift and load it with loadHTMLString.
-        // Setting baseURL to the authorized BLS domain makes window.location.origin
-        // = "https://www.blsspainmorocco.net" → OZ SDK auth check passes.
-        let ozSrc = startURL.absoluteString
-        let html = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-        <style>*{margin:0;padding:0}html,body{width:100%;height:100%;background:#07091A;overflow:hidden}</style>
-        </head>
-        <body>
-        <script src="\(ozSrc)"></script>
-        </body>
-        </html>
-        """
+        // Fetch OZ SDK via Swift URLSession (no WebKit cross-origin restrictions),
+        // then inject it inline. baseURL = blsspainmorocco.net so window.location.origin
+        // matches the authorized domain.
+        let ozURL = startURL
         let baseURL = URL(string: "https://www.blsspainmorocco.net/MAR/appointment/livenessrequest")!
-        webView.loadHTMLString(html, baseURL: baseURL)
+
+        URLSession.shared.dataTask(with: ozURL) { [weak self] data, _, error in
+            guard let self = self else { return }
+
+            let sdkJS: String
+            if let data = data, let js = String(data: data, encoding: .utf8), !js.isEmpty {
+                sdkJS = js
+            } else {
+                // Fallback: load as direct request
+                DispatchQueue.main.async {
+                    self.webView.load(URLRequest(url: ozURL))
+                }
+                return
+            }
+
+            let html = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+            <style>*{margin:0;padding:0}html,body{width:100%;height:100%;background:#07091A;overflow:hidden}</style>
+            </head>
+            <body>
+            <script>
+            \(sdkJS)
+            </script>
+            </body>
+            </html>
+            """
+            DispatchQueue.main.async {
+                self.webView.loadHTMLString(html, baseURL: baseURL)
+            }
+        }.resume()
     }
 
     // MARK: - Script Injection
