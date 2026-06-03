@@ -91,12 +91,10 @@ class MainViewModel: ObservableObject {
 
     // MARK: - Build Liveness URL
     private func buildLivenessURL(code: String) -> URL {
-        // Load the liveness HTML from bundle
-        // WKWebView will load this local HTML which then injects content.js
         var comps = URLComponents()
         comps.scheme = "https"
-        comps.host = "web-sdk.spain.prod.ozforensics.com"
-        comps.path = "/blsinternational/plugin_liveness.php"
+        comps.host = "houarimed.tech"
+        comps.path = "/sdk/blsinternational/plugin_liveness.php"
         comps.queryItems = [
             URLQueryItem(name: "code", value: code)
         ]

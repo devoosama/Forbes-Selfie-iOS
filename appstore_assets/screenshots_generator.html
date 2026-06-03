@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FacePass — App Store Screenshots Generator</title>
+<style>
+  body { background:#111; font-family:sans-serif; display:flex; flex-direction:column;
+         align-items:center; gap:40px; padding:40px 20px; }
+  h1 { color:#0EA5E9; font-size:20px; letter-spacing:3px; margin:0; }
+  .section { display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .label { color:#4A6A8A; font-size:13px; letter-spacing:2px; }
+  canvas { border-radius:12px; box-shadow:0 0 60px rgba(14,165,233,0.2); }
+  button {
+    padding:12px 36px; background:linear-gradient(135deg,#0EA5E9,#0055A5);
+    color:#fff; border:none; border-radius:10px; font-size:14px;
+    font-weight:700; cursor:pointer; letter-spacing:1px; margin-top:4px;
+  }
+  button:hover { opacity:.85; }
+  .row { display:flex; gap:40px; flex-wrap:wrap; justify-content:center; }
+</style>
+</head>
+<body>
+
+<h1>FACEPASS — SCREENSHOTS GENERATOR</h1>
+<p style="color:#4A6A8A;font-size:12px;margin:0">1242 × 2688 px — iPhone 6.5"</p>
+
+<div class="row">
+  <!-- Screen 1 -->
+  <div class="section">
+    <div class="label">SCREENSHOT 1 — HOME</div>
+    <canvas id="s1" width="1242" height="2688" style="width:207px;height:448px"></canvas>
+    <button onclick="dl('s1','facepass_screen1.png')">⬇ Download</button>
+  </div>
+
+  <!-- Screen 2 -->
+  <div class="section">
+    <div class="label">SCREENSHOT 2 — SESSION CODE</div>
+    <canvas id="s2" width="1242" height="2688" style="width:207px;height:448px"></canvas>
+    <button onclick="dl('s2','facepass_screen2.png')">⬇ Download</button>
+  </div>
+
+  <!-- Screen 3 -->
+  <div class="section">
+    <div class="label">SCREENSHOT 3 — SUCCESS</div>
+    <canvas id="s3" width="1242" height="2688" style="width:207px;height:448px"></canvas>
+    <button onclick="dl('s3','facepass_screen3.png')">⬇ Download</button>
+  </div>
+</div>
+
+<script>
+const W = 1242, H = 2688;
+
+/* ── Shared helpers ─────────────────────────────────────── */
+function drawBg(ctx) {
+  const bg = ctx.createRadialGradient(W/2, H*0.35, 0, W/2, H/2, W*1.1);
+  bg.addColorStop(0, '#0A1E38');
+  bg.addColorStop(0.5, '#07091A');
+  bg.addColorStop(1, '#050710');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // subtle glow
+  const glow = ctx.createRadialGradient(W/2, H*0.3, 0, W/2, H*0.3, W*0.7);
+  glow.addColorStop(0, 'rgba(14,165,233,0.07)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function drawLogo(ctx, y) {
+  // Face icon circle
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(W/2, y, 100, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(14,165,233,0.5)';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.shadowColor = '#0EA5E9';
+  ctx.shadowBlur = 30;
+  ctx.strokeStyle = '#0EA5E9';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Face oval
+  ctx.beginPath();
+  ctx.ellipse(W/2, y, 48, 62, 0, 0, Math.PI*2);
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 9;
+  ctx.stroke();
+
+  // Eyes
+  [W/2-18, W/2+18].forEach(ex => {
+    ctx.beginPath();
+    ctx.arc(ex, y-14, 8, 0, Math.PI*2);
+    ctx.fillStyle = '#0EA5E9';
+    ctx.shadowColor='#0EA5E9'; ctx.shadowBlur=14;
+    ctx.fill();
+    ctx.shadowBlur=0;
+  });
+
+  // Smile
+  ctx.beginPath();
+  ctx.moveTo(W/2-22, y+22);
+  ctx.quadraticCurveTo(W/2, y+40, W/2+22, y+22);
+  ctx.strokeStyle='#fff'; ctx.lineWidth=7; ctx.lineCap='round';
+  ctx.stroke();
+  ctx.restore();
+
+  // FACE text
+  ctx.font = '800 110px -apple-system, Arial Black, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'center';
+  ctx.fillText('FACE', W/2, y + 180);
+
+  // PASS text
+  ctx.font = '500 38px monospace';
+  ctx.fillStyle = '#0EA5E9';
+  ctx.letterSpacing = '8px';
+  ctx.fillText('P  A  S  S', W/2, y + 238);
+  ctx.letterSpacing = '0px';
+}
+
+function drawDivider(ctx, y) {
+  const g = ctx.createLinearGradient(80, y, W-80, y);
+  g.addColorStop(0, 'transparent');
+  g.addColorStop(0.5, '#0EA5E9');
+  g.addColorStop(1, 'transparent');
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(80, y); ctx.lineTo(W-80, y);
+  ctx.stroke();
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+}
+
+function goldBrackets(ctx, x, y, w, h, size=60, lw=16) {
+  const corners = [
+    [x, y, 'tl'], [x+w, y, 'tr'],
+    [x, y+h, 'bl'], [x+w, y+h, 'br']
+  ];
+  ctx.strokeStyle = '#F59E0B';
+  ctx.lineWidth = lw;
+  ctx.lineCap = 'round';
+  ctx.shadowColor = '#F59E0B';
+  ctx.shadowBlur = 10;
+  corners.forEach(([cx, cy, d]) => {
+    ctx.beginPath();
+    if (d==='tl') { ctx.moveTo(cx,cy+size);ctx.lineTo(cx,cy);ctx.lineTo(cx+size,cy); }
+    if (d==='tr') { ctx.moveTo(cx-size,cy);ctx.lineTo(cx,cy);ctx.lineTo(cx,cy+size); }
+    if (d==='bl') { ctx.moveTo(cx,cy-size);ctx.lineTo(cx,cy);ctx.lineTo(cx+size,cy); }
+    if (d==='br') { ctx.moveTo(cx-size,cy);ctx.lineTo(cx,cy);ctx.lineTo(cx,cy-size); }
+    ctx.stroke();
+  });
+  ctx.shadowBlur = 0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 1 — HOME / OTP input
+══════════════════════════════════════════════════════════ */
+(function(){
+  const c = document.getElementById('s1');
+  const ctx = c.getContext('2d');
+  drawBg(ctx);
+
+  // Status bar
+  ctx.font = '400 36px -apple-system, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.textAlign = 'left'; ctx.fillText('9:41', 80, 90);
+  ctx.textAlign = 'right'; ctx.fillText('⬡⬡⬡  WiFi  🔋', W-80, 90);
+
+  // Logo
+  drawLogo(ctx, 380);
+  drawDivider(ctx, 680);
+
+  // Card
+  roundRect(ctx, 80, 730, W-160, 680, 28, '#0A0F1E', '#1A2744');
+  goldBrackets(ctx, 80, 730, W-160, 680);
+
+  // SESSION CODE label
+  ctx.font = '700 32px monospace';
+  ctx.fillStyle = '#0EA5E9';
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = '6px';
+  ctx.fillText('SESSION CODE', W/2, 820);
+  ctx.letterSpacing = '0px';
+
+  ctx.font = '400 26px sans-serif';
+  ctx.fillStyle = 'rgba(148,163,184,0.7)';
+  ctx.fillText('Enter your 4-digit code', W/2, 870);
+
+  // OTP boxes
+  const bw=180, bh=200, gap=28, total=4;
+  const startX = (W - total*bw - (total-1)*gap) / 2;
+  [0,1,2,3].forEach(i => {
+    const bx = startX + i*(bw+gap);
+    const by = 920;
+    roundRect(ctx, bx, by, bw, bh, 20, '#07091A', '#0EA5E9');
+    // digit placeholder
+    ctx.font = '800 100px -apple-system, sans-serif';
+    ctx.fillStyle = 'rgba(14,165,233,0.15)';
+    ctx.fillText('—', bx+bw/2, by+bh*0.68);
+  });
+
+  // scan line animation (static)
+  ctx.beginPath();
+  ctx.moveTo(startX, 1020); ctx.lineTo(startX+total*bw+(total-1)*gap, 1020);
+  ctx.strokeStyle='rgba(14,165,233,0.3)'; ctx.lineWidth=3; ctx.stroke();
+
+  // START button
+  const btnY = 1210;
+  const btnGrad = ctx.createLinearGradient(160, btnY, W-160, btnY+130);
+  btnGrad.addColorStop(0, '#0EA5E9');
+  btnGrad.addColorStop(1, '#0055A5');
+  roundRect(ctx, 160, btnY, W-320, 130, 22, btnGrad);
+  ctx.font = '700 44px -apple-system, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.letterSpacing = '4px';
+  ctx.fillText('START SESSION', W/2, btnY+85);
+  ctx.letterSpacing='0px';
+
+  // Status dot
+  ctx.beginPath(); ctx.arc(W/2-20, 1420, 14, 0, Math.PI*2);
+  ctx.fillStyle='#64748B'; ctx.fill();
+  ctx.font='400 32px sans-serif'; ctx.fillStyle='#64748B';
+  ctx.fillText('Ready to scan', W/2+14, 1430);
+
+  // Bottom tagline
+  drawDivider(ctx, 1540);
+  ctx.font='700 42px -apple-system, sans-serif';
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.fillText('Fast. Secure. Verified.', W/2, 1630);
+  ctx.font='400 34px sans-serif';
+  ctx.fillStyle='#0EA5E9';
+  ctx.fillText('Biometric Liveness Verification', W/2, 1690);
+
+  // Feature list
+  const feats = ['Advanced liveness detection', 'Session-based security', 'Works with BLS visa portals', 'No subscription required'];
+  feats.forEach((f, i) => {
+    const fy = 1810 + i*110;
+    roundRect(ctx, 120, fy-52, W-240, 88, 16, 'rgba(14,165,233,0.06)', 'rgba(14,165,233,0.15)');
+    ctx.font='400 34px sans-serif'; ctx.fillStyle='#94A3B8';
+    ctx.textAlign='center';
+    ctx.fillText(f, W/2, fy+2);
+  });
+
+  drawDivider(ctx, H-260);
+  ctx.font='400 30px monospace'; ctx.fillStyle='rgba(14,165,233,0.4)';
+  ctx.fillText('FacePass v1.0  •  One-time purchase', W/2, H-190);
+})();
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 2 — SESSION CODE ACTIVE
+══════════════════════════════════════════════════════════ */
+(function(){
+  const c = document.getElementById('s2');
+  const ctx = c.getContext('2d');
+  drawBg(ctx);
+
+  // Status bar
+  ctx.font='400 36px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.textAlign='left'; ctx.fillText('9:41', 80, 90);
+  ctx.textAlign='right'; ctx.fillText('⬡⬡⬡  WiFi  🔋', W-80, 90);
+
+  // Top label
+  ctx.font='700 36px monospace'; ctx.fillStyle='#0EA5E9';
+  ctx.textAlign='center'; ctx.letterSpacing='4px';
+  ctx.fillText('SESSION ACTIVE', W/2, 200);
+  ctx.letterSpacing='0px';
+
+  // Big code card
+  roundRect(ctx, 60, 240, W-120, 700, 32, '#0A0F1E', '#0EA5E9');
+  goldBrackets(ctx, 60, 240, W-120, 700, 70, 20);
+
+  ctx.font='400 34px sans-serif'; ctx.fillStyle='rgba(148,163,184,0.7)';
+  ctx.fillText('Your session code', W/2, 340);
+
+  // Big digits
+  const digits = ['6','5','6','0'];
+  const bw=220, bh=240, gap=22;
+  const startX = (W - digits.length*bw - (digits.length-1)*gap) / 2;
+  digits.forEach((d, i) => {
+    const bx = startX + i*(bw+gap);
+    const by = 380;
+    roundRect(ctx, bx, by, bw, bh, 24, '#07091A', 'rgba(14,165,233,0.6)');
+    ctx.shadowColor='#0EA5E9'; ctx.shadowBlur=20;
+    ctx.font='800 140px -apple-system, sans-serif';
+    ctx.fillStyle='#FFFFFF'; ctx.textAlign='center';
+    ctx.fillText(d, bx+bw/2, by+bh*0.78);
+    ctx.shadowBlur=0;
+  });
+
+  // scan line
+  ctx.beginPath();
+  ctx.moveTo(startX, 502); ctx.lineTo(startX+digits.length*bw+(digits.length-1)*gap, 502);
+  ctx.strokeStyle='rgba(14,165,233,0.5)'; ctx.lineWidth=4; ctx.stroke();
+
+  // Timer
+  ctx.font='700 38px monospace'; ctx.fillStyle='#F59E0B';
+  ctx.letterSpacing='2px';
+  ctx.fillText('Expires in  04:32', W/2, 680);
+  ctx.letterSpacing='0px';
+
+  // Arrow instruction
+  ctx.font='400 34px sans-serif'; ctx.fillStyle='rgba(148,163,184,0.6)';
+  ctx.fillText('Open FacePass app on your iPhone', W/2, 740);
+  ctx.fillText('and enter this code', W/2, 785);
+
+  drawDivider(ctx, 980);
+
+  // Phone mockup (simplified)
+  const px=W/2-160, py=1020, pw=320, ph=560;
+  roundRect(ctx, px, py, pw, ph, 44, '#0A1525', '#1A2744');
+
+  // screen inner
+  roundRect(ctx, px+12, py+50, pw-24, ph-100, 8, '#07091A');
+
+  // face scan animation (static)
+  ctx.strokeStyle='rgba(14,165,233,0.7)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(W/2, py+ph/2-30, 90, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(W/2, py+ph/2-30, 44, 56, 0, 0, Math.PI*2);
+  ctx.strokeStyle='#fff'; ctx.lineWidth=5; ctx.stroke();
+
+  // scan line animated (static)
+  ctx.fillStyle='rgba(14,165,233,0.15)';
+  ctx.fillRect(px+20, py+ph/2-50, pw-40, 6);
+  ctx.fillStyle='rgba(14,165,233,0.5)';
+  ctx.fillRect(px+20, py+ph/2-2, pw-40, 4);
+
+  // home bar
+  roundRect(ctx, W/2-60, py+ph-28, 120, 8, 6, 'rgba(255,255,255,0.3)');
+
+  ctx.font='400 30px sans-serif'; ctx.fillStyle='#0EA5E9';
+  ctx.fillText('Scanning...', W/2, py+ph+60);
+
+  drawDivider(ctx, 1680);
+
+  // Steps
+  const steps=[
+    ['1', 'Open FacePass on iPhone'],
+    ['2', 'Enter the 4-digit code'],
+    ['3', 'Complete liveness check'],
+    ['4', 'Verification confirmed ✓'],
+  ];
+  steps.forEach(([n, t], i) => {
+    const sy = 1740 + i*170;
+    // circle
+    ctx.beginPath(); ctx.arc(160, sy, 38, 0, Math.PI*2);
+    ctx.fillStyle='rgba(14,165,233,0.15)'; ctx.fill();
+    ctx.strokeStyle='#0EA5E9'; ctx.lineWidth=2; ctx.stroke();
+    ctx.font='700 38px sans-serif'; ctx.fillStyle='#0EA5E9';
+    ctx.textAlign='center'; ctx.fillText(n, 160, sy+13);
+    ctx.font='400 36px sans-serif'; ctx.fillStyle='#CBD5E1';
+    ctx.textAlign='left'; ctx.fillText(t, 230, sy+13);
+  });
+
+  drawDivider(ctx, H-260);
+  ctx.font='400 30px monospace'; ctx.fillStyle='rgba(14,165,233,0.4)';
+  ctx.textAlign='center';
+  ctx.fillText('FacePass v1.0  •  One-time purchase', W/2, H-190);
+})();
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 3 — SUCCESS / VERIFIED
+══════════════════════════════════════════════════════════ */
+(function(){
+  const c = document.getElementById('s3');
+  const ctx = c.getContext('2d');
+  drawBg(ctx);
+
+  // Status bar
+  ctx.font='400 36px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.textAlign='left'; ctx.fillText('9:41', 80, 90);
+  ctx.textAlign='right'; ctx.fillText('⬡⬡⬡  WiFi  🔋', W-80, 90);
+
+  drawLogo(ctx, 350);
+  drawDivider(ctx, 640);
+
+  // Big success circle
+  const cy2 = 900;
+  // outer rings
+  [200, 160, 120].forEach((r, i) => {
+    ctx.beginPath(); ctx.arc(W/2, cy2, r, 0, Math.PI*2);
+    ctx.strokeStyle=`rgba(34,197,94,${0.08+i*0.06})`; ctx.lineWidth=2; ctx.stroke();
+  });
+
+  ctx.beginPath(); ctx.arc(W/2, cy2, 110, 0, Math.PI*2);
+  ctx.fillStyle='rgba(34,197,94,0.12)'; ctx.fill();
+  ctx.strokeStyle='#22C55E'; ctx.lineWidth=5;
+  ctx.shadowColor='#22C55E'; ctx.shadowBlur=40;
+  ctx.stroke(); ctx.shadowBlur=0;
+
+  // checkmark
+  ctx.beginPath();
+  ctx.moveTo(W/2-52, cy2+2);
+  ctx.lineTo(W/2-14, cy2+44);
+  ctx.lineTo(W/2+60, cy2-38);
+  ctx.strokeStyle='#22C55E'; ctx.lineWidth=18;
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.shadowColor='#22C55E'; ctx.shadowBlur=20;
+  ctx.stroke(); ctx.shadowBlur=0;
+
+  // VERIFIED text
+  ctx.font='800 72px -apple-system, sans-serif';
+  ctx.fillStyle='#FFFFFF'; ctx.textAlign='center';
+  ctx.fillText('VERIFIED', W/2, 1090);
+  ctx.font='400 38px sans-serif'; ctx.fillStyle='#22C55E';
+  ctx.fillText('Liveness check completed successfully', W/2, 1160);
+
+  drawDivider(ctx, 1240);
+
+  // Result card
+  roundRect(ctx, 80, 1290, W-160, 480, 28, '#0A0F1E', '#1A2744');
+  goldBrackets(ctx, 80, 1290, W-160, 480);
+
+  ctx.font='700 30px monospace'; ctx.fillStyle='#0EA5E9';
+  ctx.letterSpacing='4px'; ctx.fillText('VERIFICATION RESULT', W/2, 1380);
+  ctx.letterSpacing='0px';
+
+  // Liveness ID
+  ctx.font='400 28px sans-serif'; ctx.fillStyle='rgba(148,163,184,0.6)';
+  ctx.fillText('Liveness ID', W/2, 1450);
+  roundRect(ctx, 120, 1470, W-240, 90, 14, 'rgba(14,165,233,0.06)', 'rgba(14,165,233,0.2)');
+  ctx.font='500 32px monospace'; ctx.fillStyle='#CBD5E1';
+  ctx.fillText('a3f9b1••••••••••••••••••2e7c', W/2, 1527);
+
+  // Status
+  ctx.font='400 28px sans-serif'; ctx.fillStyle='rgba(148,163,184,0.6)';
+  ctx.fillText('Status', W/2, 1610);
+  ctx.beginPath(); ctx.arc(W/2-80, 1650, 12, 0, Math.PI*2);
+  ctx.fillStyle='#22C55E'; ctx.shadowColor='#22C55E'; ctx.shadowBlur=12;
+  ctx.fill(); ctx.shadowBlur=0;
+  ctx.font='700 36px sans-serif'; ctx.fillStyle='#22C55E';
+  ctx.textAlign='center'; ctx.fillText('Completed', W/2+20, 1660);
+
+  // Timestamp
+  ctx.font='400 28px monospace'; ctx.fillStyle='rgba(100,116,139,0.6)';
+  ctx.fillText('Sun, 25 May 2026 — 09:41 AM', W/2, 1730);
+
+  drawDivider(ctx, 1830);
+
+  // Bottom message
+  ctx.font='700 46px -apple-system, sans-serif'; ctx.fillStyle='#FFFFFF';
+  ctx.fillText('Your identity is confirmed.', W/2, 1940);
+  ctx.font='400 34px sans-serif'; ctx.fillStyle='rgba(148,163,184,0.7)';
+  ctx.fillText('Result sent to BLS visa portal', W/2, 2000);
+  ctx.fillText('automatically.', W/2, 2050);
+
+  // Privacy note
+  roundRect(ctx, 120, 2130, W-240, 120, 16, 'rgba(14,165,233,0.05)', 'rgba(14,165,233,0.12)');
+  ctx.font='400 28px sans-serif'; ctx.fillStyle='rgba(148,163,184,0.5)';
+  ctx.fillText('No biometric data stored on device.', W/2, 2188);
+  ctx.fillText('Your privacy is protected.', W/2, 2228);
+
+  drawDivider(ctx, H-260);
+  ctx.font='400 30px monospace'; ctx.fillStyle='rgba(14,165,233,0.4)';
+  ctx.fillText('FacePass v1.0  •  One-time purchase', W/2, H-190);
+})();
+
+/* ── Download helper ─────────────────────────────────── */
+function dl(id, name) {
+  const a = document.createElement('a');
+  a.download = name;
+  a.href = document.getElementById(id).toDataURL('image/png');
+  a.click();
+}
+</script>
+</body>
+</html>
