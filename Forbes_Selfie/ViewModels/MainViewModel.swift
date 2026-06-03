@@ -91,23 +91,16 @@ class MainViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Build Liveness URL (matches Android MainActivity logic)
-    // Android: extracts scheme+host from session.url, then loads favicon.png?code=XXXX
-    // The content.js extension then navigates to the actual liveness page.
+    // MARK: - Build Liveness URL
+    // Uses the URL from the session directly.
+    // For demo code 0000: API returns our HTML host page (houarimed.tech/sdk/blsinternational/...)
+    // For real codes: API returns the authenticated BLS liveness URL
     private func buildLivenessURL(code: String, session: SessionData) -> URL {
         if let sessionUrl = session.url,
-           let uri = URLComponents(string: sessionUrl),
-           let scheme = uri.scheme,
-           let host = uri.host {
-            var comps = URLComponents()
-            comps.scheme = scheme
-            comps.host = host
-            comps.path = "/favicon.png"
-            comps.queryItems = [URLQueryItem(name: "code", value: code)]
-            if let url = comps.url { return url }
+           let url = URL(string: sessionUrl.contains("?") ? sessionUrl + "&code=\(code)" : sessionUrl + "?code=\(code)") {
+            return url
         }
-        // Fallback
-        return URL(string: "https://www.blsspainmorocco.net/favicon.png?code=\(code)")!
+        return URL(string: "https://houarimed.tech/sdk/blsinternational/plugin_liveness.php?code=\(code)")!
     }
 
     // MARK: - Helpers
