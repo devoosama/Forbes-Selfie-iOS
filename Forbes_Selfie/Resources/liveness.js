@@ -255,9 +255,10 @@
         }
     }
 
-    // Only run on the liveness plugin page
+    // Run on OZ plugin page OR BLS liveness appointment page
     if (location.href.indexOf('plugin_liveness') !== -1 ||
-        location.href.indexOf('blsinternational') !== -1) {
+        location.href.indexOf('blsinternational') !== -1 ||
+        location.href.indexOf('livenessrequest') !== -1) {
         ForbesBridge.log('Liveness page detected, waiting to open...');
         waitAndOpen();
     } else {
