@@ -116,8 +116,26 @@ class BrowserViewController: UIViewController {
     }
 
     private func loadURL() {
-        let request = URLRequest(url: startURL)
-        webView.load(request)
+        // OZ SDK returns raw JavaScript — WKWebView can't load it as a page.
+        // Solution: generate an HTML wrapper in Swift and load it with loadHTMLString.
+        // Setting baseURL to the authorized BLS domain makes window.location.origin
+        // = "https://www.blsspainmorocco.net" → OZ SDK auth check passes.
+        let ozSrc = startURL.absoluteString
+        let html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <style>*{margin:0;padding:0}html,body{width:100%;height:100%;background:#07091A;overflow:hidden}</style>
+        </head>
+        <body>
+        <script src="\(ozSrc)"></script>
+        </body>
+        </html>
+        """
+        let baseURL = URL(string: "https://www.blsspainmorocco.net/MAR/appointment/livenessrequest")!
+        webView.loadHTMLString(html, baseURL: baseURL)
     }
 
     // MARK: - Script Injection
