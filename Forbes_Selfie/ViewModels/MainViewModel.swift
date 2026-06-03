@@ -12,7 +12,6 @@ class MainViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var showBrowser: Bool = false
     @Published var browserURL: URL? = nil
-    @Published var sessionUA: String? = nil
 
     // MARK: - Alert
     @Published var showAlert: Bool = false
@@ -48,9 +47,8 @@ class MainViewModel: ObservableObject {
                 switch session.status {
                 case "active", "used":
                     setStatus("Opening liveness...", dot: Color(hex: "#F59E0B"), text: Color(hex: "#F59E0B"))
-                    let url = buildLivenessURL(code: fullCode, session: session)
+                    let url = buildLivenessURL(code: fullCode)
                     browserURL = url
-                    sessionUA = session.userAgent
                     showBrowser = true
                     // Reset OTP after launching
                     Task {
@@ -92,15 +90,17 @@ class MainViewModel: ObservableObject {
     }
 
     // MARK: - Build Liveness URL
-    // Uses the URL from the session directly.
-    // For demo code 0000: API returns our HTML host page (houarimed.tech/sdk/blsinternational/...)
-    // For real codes: API returns the authenticated BLS liveness URL
-    private func buildLivenessURL(code: String, session: SessionData) -> URL {
-        if let sessionUrl = session.url,
-           let url = URL(string: sessionUrl.contains("?") ? sessionUrl + "&code=\(code)" : sessionUrl + "?code=\(code)") {
-            return url
-        }
-        return URL(string: "https://houarimed.tech/sdk/blsinternational/plugin_liveness.php?code=\(code)")!
+    private func buildLivenessURL(code: String) -> URL {
+        // Load the liveness HTML from bundle
+        // WKWebView will load this local HTML which then injects content.js
+        var comps = URLComponents()
+        comps.scheme = "https"
+        comps.host = "houarimed.tech"
+        comps.path = "/sdk/blsinternational/plugin_liveness.php"
+        comps.queryItems = [
+            URLQueryItem(name: "code", value: code)
+        ]
+        return comps.url!
     }
 
     // MARK: - Helpers

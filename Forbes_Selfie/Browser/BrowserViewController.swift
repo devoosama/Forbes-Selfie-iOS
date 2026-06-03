@@ -15,7 +15,6 @@ class BrowserViewController: UIViewController {
     // MARK: - Properties
     var startURL: URL
     var sessionCode: String
-    var customUserAgent: String
     var onComplete: ((String) -> Void)?
     var onClose: (() -> Void)?
 
@@ -24,12 +23,9 @@ class BrowserViewController: UIViewController {
     private var progressObserver: NSKeyValueObservation?
 
     // MARK: - Init
-    init(url: URL, code: String, userAgent: String = "") {
+    init(url: URL, code: String) {
         self.startURL = url
         self.sessionCode = code
-        self.customUserAgent = userAgent.isEmpty
-            ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-            : userAgent
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) { fatalError() }
@@ -64,7 +60,6 @@ class BrowserViewController: UIViewController {
         injectScripts(into: contentController)
 
         webView = WKWebView(frame: .zero, configuration: config)
-        webView.customUserAgent = customUserAgent
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.translatesAutoresizingMaskIntoConstraints = false

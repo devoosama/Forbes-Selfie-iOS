@@ -255,33 +255,9 @@
         }
     }
 
-    // ── favicon.png?code=XXXX → navigate to actual liveness page ───────────────
-    // Matches Android MainActivity: triggerUrl = scheme://host/favicon.png?code=XXXX
-    // content.js (Android extension) normally handles this; on iOS we do it here.
-    if (location.pathname === '/favicon.png' && location.search.indexOf('code=') !== -1) {
-        var triggerCode = new URLSearchParams(location.search).get('code') || codeParam;
-        ForbesBridge.log('favicon trigger detected, fetching session for code=' + triggerCode);
-
-        fetch(SERVER_URL + '/getData/' + triggerCode)
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data && data.success && data.url) {
-                    ForbesBridge.log('Navigating to: ' + data.url);
-                    window.location.href = data.url;
-                } else {
-                    // Fallback: go to BLS liveness page directly
-                    var host = location.hostname;
-                    window.location.href = location.origin + '/MAR/appointment/livenessrequest?code=' + triggerCode;
-                }
-            })
-            .catch(function(e) {
-                ForbesBridge.log('Session fetch error: ' + e);
-            });
-
-    // ── liveness page → open OZ SDK ─────────────────────────────────────────
-    } else if (location.href.indexOf('plugin_liveness') !== -1 ||
-               location.href.indexOf('blsinternational') !== -1 ||
-               location.href.indexOf('livenessrequest') !== -1) {
+    // Only run on the liveness plugin page
+    if (location.href.indexOf('plugin_liveness') !== -1 ||
+        location.href.indexOf('blsinternational') !== -1) {
         ForbesBridge.log('Liveness page detected, waiting to open...');
         waitAndOpen();
     } else {
