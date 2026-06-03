@@ -12,6 +12,7 @@ class MainViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var showBrowser: Bool = false
     @Published var browserURL: URL? = nil
+    @Published var sessionUA: String? = nil
 
     // MARK: - Alert
     @Published var showAlert: Bool = false
@@ -47,8 +48,9 @@ class MainViewModel: ObservableObject {
                 switch session.status {
                 case "active", "used":
                     setStatus("Opening liveness...", dot: Color(hex: "#F59E0B"), text: Color(hex: "#F59E0B"))
-                    let url = buildLivenessURL(code: fullCode)
+                    let url = buildLivenessURL(code: fullCode, session: session)
                     browserURL = url
+                    sessionUA = session.userAgent
                     showBrowser = true
                     // Reset OTP after launching
                     Task {
@@ -89,16 +91,23 @@ class MainViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Build Liveness URL
-    private func buildLivenessURL(code: String) -> URL {
-        var comps = URLComponents()
-        comps.scheme = "https"
-        comps.host = "web-sdk.spain.prod.ozforensics.com"
-        comps.path = "/blsinternational/plugin_liveness.php"
-        comps.queryItems = [
-            URLQueryItem(name: "code", value: code)
-        ]
-        return comps.url!
+    // MARK: - Build Liveness URL (matches Android MainActivity logic)
+    // Android: extracts scheme+host from session.url, then loads favicon.png?code=XXXX
+    // The content.js extension then navigates to the actual liveness page.
+    private func buildLivenessURL(code: String, session: SessionData) -> URL {
+        if let sessionUrl = session.url,
+           let uri = URLComponents(string: sessionUrl),
+           let scheme = uri.scheme,
+           let host = uri.host {
+            var comps = URLComponents()
+            comps.scheme = scheme
+            comps.host = host
+            comps.path = "/favicon.png"
+            comps.queryItems = [URLQueryItem(name: "code", value: code)]
+            if let url = comps.url { return url }
+        }
+        // Fallback
+        return URL(string: "https://www.blsspainmorocco.net/favicon.png?code=\(code)")!
     }
 
     // MARK: - Helpers

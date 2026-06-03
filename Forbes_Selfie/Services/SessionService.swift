@@ -3,12 +3,16 @@ import Foundation
 // MARK: - Session Model
 struct SessionData: Decodable {
     let status: String
+    let url: String?
+    let userAgent: String?
     let livenessId: String?
     let code: String?
     let createdAt: String?
 
     enum CodingKeys: String, CodingKey {
         case status
+        case url
+        case userAgent = "userAgent"
         case livenessId = "liveness_id"
         case code
         case createdAt = "created_at"

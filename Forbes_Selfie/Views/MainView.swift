@@ -64,7 +64,7 @@ struct MainView: View {
         }
         .onTapGesture { focusedField = nil }
         .sheet(isPresented: $vm.showBrowser) {
-            BrowserView(url: vm.browserURL!)
+            BrowserView(url: vm.browserURL!, customUA: vm.sessionUA)
                 .ignoresSafeArea()
         }
         .alert(vm.alertTitle, isPresented: $vm.showAlert) {
