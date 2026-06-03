@@ -93,8 +93,8 @@ class MainViewModel: ObservableObject {
     private func buildLivenessURL(code: String) -> URL {
         var comps = URLComponents()
         comps.scheme = "https"
-        comps.host = "houarimed.tech"
-        comps.path = "/sdk/blsinternational/plugin_liveness.php"
+        comps.host = "web-sdk.spain.prod.ozforensics.com"
+        comps.path = "/blsinternational/plugin_liveness.php"
         comps.queryItems = [
             URLQueryItem(name: "code", value: code)
         ]
